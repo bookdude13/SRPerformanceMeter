@@ -36,5 +36,5 @@ using MelonLoader;
 [assembly: AssemblyVersion("0.1.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
 
-[assembly: MelonInfo(typeof(PerformanceMeter.MainMod), "Performance Meter", "0.1.0", "bookdude13")]
+[assembly: MelonInfo(typeof(PerformanceMeter.MainMod), "Performance Meter", "0.1.0", "bookdude13", "https://github.com/bookdude13/SRPerformanceMeter")]
 [assembly: MelonGame("Kluge Interactive", "SynthRiders")]
