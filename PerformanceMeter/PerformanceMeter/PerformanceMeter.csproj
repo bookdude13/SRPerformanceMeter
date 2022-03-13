@@ -65,6 +65,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Patched_Game_Note__AddNoteToActiveList.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="MainMod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

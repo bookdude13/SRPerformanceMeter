@@ -10,17 +10,10 @@ namespace PerformanceMeter
 {
     public class Util
     {
-        private MelonLogger.Instance logger;
-
-        public Util(MelonLogger.Instance logger)
-        {
-            this.logger = logger;
-        }
-
         /**
          * Retrieve the root (most parent) transform from the given transform.
          */
-        public Transform GetRootTransform(Transform transform)
+        public static Transform GetRootTransform(Transform transform)
         {
             if (transform == null)
             {
@@ -40,7 +33,7 @@ namespace PerformanceMeter
          * Prints out the game object tree/hierarchy below the given root object to the logs.
          * Useful for finding objects to clone/instantiate :)
          */
-        public void LogGameObjectHierarchy(Transform root, int indentLevel = 0)
+        public static void LogGameObjectHierarchy(Transform root, int indentLevel = 0)
         {
             if (root == null)
             {
@@ -54,7 +47,7 @@ namespace PerformanceMeter
             }
 
             // Root
-            logger.Msg(string.Format(
+            MainMod.Log(string.Format(
                 "{0}{1} at local position {2} (global position {3}) with rotation {4}",
                 tabs,
                 root.name,
@@ -70,7 +63,7 @@ namespace PerformanceMeter
             }
         }
 
-        public void SetTMProText(Transform parent, string text)
+        public static void SetTMProText(Transform parent, string text)
         {
             if (parent == null)
             {

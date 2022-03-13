@@ -12,13 +12,15 @@ namespace PerformanceMeter
     {
         private static string SCENE_NAME_STAGE = "03.Stage";
         private static string SCENE_NAME_GAME_END = "3.GameEnd";
+        private static MelonLogger.Instance logger;
 
         public static MelonPreferences_Category prefs;
-        public static Util util;
 
-        private bool inStage = false;
-        private bool failed = false;
-        private List<float> lifePctFrames;
+        private static bool inStage = false;
+        private static bool failed = false;
+        private static Dictionary<float, float> lifePctFrames;
+        private static int numNotesAdded = 0;
+        private static int numNotesRemoved = 0;
 
         // Game_ScoreManager.UpdateLifesbar(float shrinkPercent)
         // called from GameControlManager.UpdateLifesBar()
@@ -34,57 +36,30 @@ namespace PerformanceMeter
             prefs = MelonPreferences.CreateCategory("MainPreferences", "Preferences");
             prefs.SetFilePath("UserData/PerformanceMeter.cfg");
 
-            util = new Util(LoggerInstance);
-            lifePctFrames = new List<float>();
+            logger = LoggerInstance;
+            lifePctFrames = new Dictionary<float, float>();
         }
 
-        private void reset()
+        private void Reset()
         {
             failed = false;
             inStage = false;
+            numNotesAdded = 0;
+            numNotesRemoved = 0;
             lifePctFrames.Clear();
         }
 
-        private void injectAverageLifePctText(Game_ScoreSceneController scoreSceneController, float avgLifePct)
+        private void InjectAverageLifePctText(Game_ScoreSceneController scoreSceneController, float avgLifePct)
         {
             TMPro.TMP_Text totalScoreTextObject = scoreSceneController.totalScore;
-
-            // TODO clean up finding
-            /*
-             * [13:19:51.469] [Performance_Meter] Reference game object: Value (TMPro.TextMeshPro)
-[13:19:51.470] [Performance_Meter] Parent exists: TotalScore (UnityEngine.Transform)
-[13:19:51.471] [Performance_Meter]     Name: TotalScore
-[13:19:51.471] [Performance_Meter]     GO: TotalScore (UnityEngine.GameObject)
-[13:19:51.472] [Performance_Meter] Parent exists: ScoreWrap (UnityEngine.Transform)
-[13:19:51.473] [Performance_Meter]     Name: ScoreWrap
-[13:19:51.474] [Performance_Meter]     GO: ScoreWrap (UnityEngine.GameObject)
-[13:19:51.475] [Performance_Meter] Parent exists: No Multiplayer (UnityEngine.Transform)
-[13:19:51.477] [Performance_Meter]     Name: No Multiplayer
-[13:19:51.478] [Performance_Meter]     GO: No Multiplayer (UnityEngine.GameObject)
-[13:19:51.479] [Performance_Meter] Parent exists: DisplayWrap (UnityEngine.Transform)
-[13:19:51.480] [Performance_Meter]     Name: DisplayWrap
-[13:19:51.481] [Performance_Meter]     GO: DisplayWrap (UnityEngine.GameObject)
-[13:19:51.482] [Performance_Meter] Parent exists: [Game_Scripts] (UnityEngine.Transform)
-[13:19:51.482] [Performance_Meter]     Name: [Game_Scripts]
-[13:19:51.483] [Performance_Meter]     GO: [Game_Scripts] (UnityEngine.GameObject)
-[13:19:51.484] [Performance_Meter] Top parent: [Game_Scripts] . [Game_Scripts] (UnityEngine.GameObject)
-             */
-
-            // Works but overlaps
-            /*
-            Transform totalScoreTransform = totalScoreTextObject.transform.parent;
-            Transform scoreWrapTransform = totalScoreTransform.parent;
-            LoggerInstance.Msg("scorewrap children: " + scoreWrapTransform.childCount);
-
-            GameObject duplicateText = GameObject.Instantiate(totalScoreTransform.gameObject, scoreWrapTransform);
-            duplicateText.name = "pmAvgLifePct";
-            duplicateText.GetComponentInChildren<TMPro.TMP_Text>().text = string.Format("Average life percentage: {0:0.##}", avgLifePct);
-            */
 
             Transform totalScoreTransform = totalScoreTextObject.transform.parent;
             LoggerInstance.Msg("total score children: " + totalScoreTransform.childCount);
 
-            GameObject duplicateText = GameObject.Instantiate(totalScoreTransform.gameObject, totalScoreTransform);
+            GameObject duplicateText = GameObject.Instantiate(
+                totalScoreTransform.gameObject,
+                totalScoreTransform
+            ); ;
 
             string labelChildName = "Label";
             string valueChildName = "Value";
@@ -95,11 +70,11 @@ namespace PerformanceMeter
                 Transform child = duplicateText.transform.GetChild(i);
                 if (child.name == labelChildName)
                 {
-                    util.SetTMProText(child, "Avg life pct: ");
+                    Util.SetTMProText(child, "Avg life pct: ");
                 }
                 else if (child.name == valueChildName)
                 {
-                    util.SetTMProText(child, string.Format("{0:0.##}", avgLifePct));
+                    Util.SetTMProText(child, string.Format("{0:0.##}%", avgLifePct * 100));
                 }
                 else
                 {
@@ -109,11 +84,8 @@ namespace PerformanceMeter
             }
 
             duplicateText.name = "pmAvgLifePct";
-            RectTransform[] rects = duplicateText.GetComponentsInChildren<RectTransform>();
-            LoggerInstance.Msg("Rects: " + rects?.Length);
-            LoggerInstance.Msg("Transform: " + duplicateText.transform.localPosition);
 
-            util.LogGameObjectHierarchy(util.GetRootTransform(totalScoreTransform));
+            //Util.LogGameObjectHierarchy(Util.GetRootTransform(totalScoreTransform));
 
             /*
             Transform topParent = totalScoreTextObject.transform;
@@ -139,25 +111,28 @@ namespace PerformanceMeter
                 if (lifePctFrames.Count > 0)
                 {
                     LoggerInstance.Msg(lifePctFrames.Count + " frames recorded.");
-                    float avgLifePct = lifePctFrames.Average();
+                    
+                    // TODO implement real average function using frames as time reference points
+                    float avgLifePct = lifePctFrames.Values.Average();
                     LoggerInstance.Msg("Average life pct: " + avgLifePct);
 
                     Game_ScoreSceneController scoreSceneController = Game_ScoreSceneController.s_instance;
                     if (scoreSceneController != null)
                     {
-                        injectAverageLifePctText(scoreSceneController, avgLifePct);
+                        InjectAverageLifePctText(scoreSceneController, avgLifePct);
                     }
                 }
             }
 
-            reset();
+            Log("Diff in notes ended and started: " + (numNotesRemoved - numNotesAdded));
+            Reset();
 
             inStage = sceneName == SCENE_NAME_STAGE;
 
             LoggerInstance.Msg("Scene: " + sceneName + ", stage? " + inStage);
         }
 
-        private bool shouldCheckLifePct()
+        private bool ShouldCheckLifePct()
         {
             if (GameControlManager.s_instance == null)
             {
@@ -184,11 +159,11 @@ namespace PerformanceMeter
             return true;
         }
 
-        public override void OnUpdate()
+        /*public override void OnUpdate()
         {
             if (inStage && !failed)
             {
-                if (shouldCheckLifePct())
+                if (ShouldCheckLifePct())
                 {
                     float lifePct = Synth.Utils.LifeBarHelper.GetScalePercent();
 
@@ -196,6 +171,33 @@ namespace PerformanceMeter
                     failed = lifePct <= 0;
                 }
             }
+        }*/
+
+        public static void OnAddNoteToActiveList(Game_Note note)
+        {
+            numNotesAdded++;
+            Log(string.Format("{0} added", note.name));
+        }
+
+        public static void OnRemoveNoteFromActiveList(Game_Note note, float delayMS = 0f)
+        {
+            numNotesRemoved++;
+            Log(string.Format("{0} removed", note.name));
+            float time = note.NoteTimeOnMS - delayMS;
+
+            float lifePct = Synth.Utils.LifeBarHelper.GetScalePercent();
+            lifePctFrames.Add(time, lifePct);
+            failed = lifePct <= 0;
+        }
+
+        public static void OnConsumeLinePoint(Game_Note note)
+        {
+            Log(string.Format("{0} removed (line)", note.name));
+        }
+
+        public static void Log(string message)
+        {
+            logger.Msg(message);
         }
     }
 }
