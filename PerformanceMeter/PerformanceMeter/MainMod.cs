@@ -58,13 +58,7 @@ namespace PerformanceMeter
         {
             base.OnSceneWasLoaded(buildIndex, sceneName);
 
-            LoggerInstance.Msg("Scene: " + sceneName);
-
-            /*if (sceneName == "02.The Void")
-            {
-                GameObject leaderboards = GameObject.Find("Leaderboards");
-                Util.LogGameObjectHierarchy(leaderboards.transform);
-            }*/
+            LoggerInstance.Msg("Scene loaded: " + sceneName);
 
             if (sceneName == SCENE_NAME_GAME_END)
             {
@@ -78,15 +72,7 @@ namespace PerformanceMeter
                     float avgLifePct = Utils.CalculateAverageLifePercent(lifePctFrames);
                     LoggerInstance.Msg("Average life pct: " + avgLifePct);
 
-                    Game_ScoreSceneController scoreSceneController = Game_ScoreSceneController.s_instance;
-                    if (scoreSceneController != null)
-                    {
-                        //endGameDisplay.Inject(LoggerInstance, scoreSceneController, avgLifePct);
-                    }
-                    else
-                    {
-                        LoggerInstance.Msg("No score scene controller!");
-                    }
+                    endGameDisplay.Inject(LoggerInstance, Game_ScoreSceneController.s_instance, avgLifePct);
                 }
             }
 
