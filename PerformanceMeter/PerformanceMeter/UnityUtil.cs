@@ -8,12 +8,25 @@ using UnityEngine;
 
 namespace PerformanceMeter
 {
-    public class Util
+    public class UnityUtil
     {
-        /**
-         * Retrieve the root (most parent) transform from the given transform.
-         */
+        /// <summary>
+        /// Retrieve the root(most parent) transform from the given transform.
+        /// </summary>
+        /// <param name="transform">Starting Transform in the hierarchy</param>
+        /// <returns>Topmost transform in hierarchy. Returns null if transform is null</returns>
         public static Transform GetRootTransform(Transform transform)
+        {
+            return GetParentTransformByName(transform, null);
+        }
+
+        /// <summary>
+        /// Go up the hierarchy until the parent with the given name is reached. Returns the topmost element if target not found.
+        /// </summary>
+        /// <param name="transform">Starting Transform in the hierarchy</param>
+        /// <param name="targetName">Name of target parent Transform</param>
+        /// <returns>Transform of target if found as a parent, else the root Transform of the hierarchy. Returns null if given transform is null</returns>
+        public static Transform GetParentTransformByName(Transform transform, string targetName)
         {
             if (transform == null)
             {
@@ -21,7 +34,7 @@ namespace PerformanceMeter
             }
 
             Transform currentTransform = transform;
-            while (currentTransform.parent != null)
+            while (currentTransform.name != targetName && currentTransform.parent != null)
             {
                 currentTransform = currentTransform.parent;
             }
@@ -48,18 +61,19 @@ namespace PerformanceMeter
 
             // Root
             MainMod.Log(string.Format(
-                "{0}{1} at local position {2} (global position {3}) with rotation {4}",
+                "{0}{1} at local position {2} (global position {3}) with rotation {4} (local rotation {5})",
                 tabs,
                 root.name,
                 root.localPosition,
                 root.position,
-                root.rotation
+                root.rotation,
+                root.localRotation
             ));
 
             // Children
             for (int i = 0; i < root.childCount; i++)
             {
-                LogGameObjectHierarchy(root.GetChild(i), indentLevel++);
+                LogGameObjectHierarchy(root.GetChild(i), indentLevel + 1);
             }
         }
 
