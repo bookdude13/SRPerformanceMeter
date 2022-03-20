@@ -12,15 +12,8 @@ namespace PerformanceMeter
     {
         public void Inject(
             MelonLogger.Instance logger,
-            Game_ScoreSceneController scoreSceneController,
             float avgLifePct
         ) {
-            if (scoreSceneController == null)
-            {
-                logger.Msg("No score scene controller; skipping injection.");
-                return;
-            }
-
             GameObject leftScreen = InjectLeftScreen(logger);
             InjectAverageLifePctText(logger, leftScreen, avgLifePct);
         }
@@ -45,19 +38,20 @@ namespace PerformanceMeter
             // Center screen
             GameObject centerScreen = displayWrap.transform.Find("No Multiplayer").gameObject;
 
-            Vector3 leftScreenPosition = new Vector3(-20.0f, 0.0f, -8.0f);
-            Quaternion leftScreenRotation = Quaternion.Euler(0, -90, 0);
-
             // Clone
             GameObject leftScreen = GameObject.Instantiate(
                 centerScreen.gameObject,
-                leftScreenPosition,
-                leftScreenRotation,
+                centerScreen.transform.position,
+                centerScreen.transform.rotation,
                 displayWrap.transform
             );
             leftScreen.name = "pmGameEndLeftScreen";
 
-            // Delete everything except ScoreWrap
+            // Move to left side
+            Vector3 platformPosition = new Vector3(0, 0, 0);
+            leftScreen.transform.RotateAround(platformPosition, Vector3.up, -75.0f);
+
+            // Delete unwanted children
             UnityUtil.DeleteChildren(logger, leftScreen.transform, new string[] { "ScoreWrap" });
 
             // Hide everything by default in ScoreWrap
@@ -81,7 +75,7 @@ namespace PerformanceMeter
             root.name = "pm_avgLifePct";
             UnityUtil.SetTMProText(root.Find("Label"), "Average Life Percentage");
             UnityUtil.SetTMProText(root.Find("Value"), string.Format("{0:0.###}%", avgLifePct * 100));
-            UnityUtil.DeleteChildren(logger, root, new string[] { "Label", "Value" });
+            UnityUtil.DeleteChildren(logger, root, new string[] { "Label", "Value", "Bg" });
 
             root.gameObject.SetActive(true);
         }

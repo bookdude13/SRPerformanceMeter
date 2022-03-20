@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace PerformanceMeter
 {
-    // Notes added to active list as they spawn in
+    /*// Notes added to active list as they spawn in
     [HarmonyPatch(typeof(GameControlManager), nameof(GameControlManager.AddNoteToActiveList), new Type[] { typeof(Game_Note) })]
     class Patched_GameControlManager__AddNoteToActiveList
     {
@@ -28,7 +28,7 @@ namespace PerformanceMeter
         {
             
         }
-    }
+    }*/
 
     // Called when updating the life/energy bar
     [HarmonyPatch(typeof(GameControlManager), "UpdateLifesBar")]
@@ -40,7 +40,7 @@ namespace PerformanceMeter
         }
     }
 
-    // Called on hits. Doesn't capture misses (or rail notes???)
+    /*// Called on hits. Doesn't capture misses (or rail notes???)
     [HarmonyPatch(typeof(GameControlManager), nameof(GameControlManager.OnScore), new Type[] {
         typeof(int), typeof(bool), typeof(GameObject), typeof(Game_Note.ContactState), typeof(bool)
     })]
@@ -70,7 +70,7 @@ namespace PerformanceMeter
             ));
             MainMod.Remove();
         }
-    }
+    }*/
 
     // Called on game end
     [HarmonyPatch(typeof(GameControlManager), nameof(GameControlManager.GameOver))]
@@ -79,12 +79,12 @@ namespace PerformanceMeter
         static void Postfix(GameControlManager __instance)
         {
             // Add final frame for life pct calculations
-            MainMod.Log("GameOver at " + __instance.PlayTimeMS + ". PlayDelay: " + __instance.PlayDelay());
+            MainMod.Log("GameOver at " + __instance.PlayTimeMS);
             MainMod.OnUpdateLifesBar(__instance.PlayTimeMS, Synth.Utils.LifeBarHelper.GetScalePercent());
         }
     }
 
-    // Called when special note hit, regardless of if it was a good hit or not.
+    /*// Called when special note hit, regardless of if it was a good hit or not.
     // Can be a miss if a 2h is hit by only one hand.
     [HarmonyPatch(typeof(GameControlManager), nameof(GameControlManager.OnSpecialNoteHit), new Type[] {
         typeof(string), typeof(bool), typeof(int)
@@ -113,5 +113,5 @@ namespace PerformanceMeter
                 wasFailed, eventID, forceSuccess
             ));
         }
-    }
+    }*/
 }
