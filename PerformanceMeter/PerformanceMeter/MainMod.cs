@@ -64,17 +64,6 @@ namespace PerformanceMeter
             Reset();
         }
 
-       /* public override void OnUpdate()
-        {
-            base.OnUpdate();
-            accumTimeSec += Time.deltaTime;
-            if (timeSec >= pollingDelaySec)
-            {
-                lifePctFrames.Add(lastFrameSec + accumTimeSec, Synth.Utils.LifeBarHelper.GetScalePercent());
-                lastFrameSec += accumTimeSec;
-            }
-        }*/
-
         public static void OnUpdateLifesBar(float songTimeMS, float lifePct)
         {
             lifePctFrames.Add(songTimeMS, lifePct);
