@@ -77,6 +77,74 @@ namespace PerformanceMeter
             }
         }
 
+        /**
+         * Prints out the components attached to the given game object and all children.
+         * Useful for describing objects to clone/instantiate
+         */
+        public static void LogComponentsRecursive(MelonLogger.Instance logger, Transform root, string tabs = "")
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            // Root
+            logger.Msg(string.Format(
+                "{0}{1} components:",
+                tabs,
+                root.name
+            ));
+
+            // Components
+            tabs += "\t";
+            foreach (Component component in root.GetComponents<Component>())
+            {
+                Type type = component.GetType();
+                if (type == typeof(SpriteRenderer))
+                {
+                    logger.Msg(string.Format(
+                        "{0}{1} ({2}). Sprite: {3}, Color: {4}, Size: {5}",
+                        tabs,
+                        component.name,
+                        component.GetType(),
+                        ((SpriteRenderer) component).sprite,
+                        ((SpriteRenderer)component).color,
+                        ((SpriteRenderer)component).size
+                    ));
+                }
+                else if (type == typeof(RectTransform))
+                {
+                    logger.Msg(string.Format(
+                        "{0}{1} ({2}). Rect: {3}, anchor min {4}, max {5}, scale: {6}, local scale: {7}, sizeDelta: {8}",
+                        tabs,
+                        component.name,
+                        component.GetType(),
+                        ((RectTransform)component).rect,
+                        ((RectTransform)component).anchorMin,
+                        ((RectTransform)component).anchorMax,
+                        component.transform.localScale,
+                        ((RectTransform)component).localScale,
+                        ((RectTransform)component).sizeDelta
+                    ));
+                }
+                else
+                {
+                    logger.Msg(string.Format(
+                        "{0}{1} ({2})",
+                        tabs,
+                        component.name,
+                        component.GetType()
+                    ));
+                }
+            }
+
+            // Children
+            for (int i = 0; i < root.childCount; i++)
+            {
+                LogComponentsRecursive(logger, root.GetChild(i), tabs);
+            }
+        }
+
         public static void SetTMProText(Transform parent, string text)
         {
             if (parent == null)

@@ -54,10 +54,7 @@ namespace PerformanceMeter
                 else
                 {
                     LoggerInstance.Msg(lifePctFrames.Count + " frames recorded.");
-                    float avgLifePct = Utils.CalculateAverageLifePercent(lifePctFrames);
-                    LoggerInstance.Msg("Average life pct: " + avgLifePct);
-
-                    endGameDisplay.Inject(LoggerInstance, avgLifePct);
+                    endGameDisplay.Inject(LoggerInstance, lifePctFrames);
                 }
             }
 

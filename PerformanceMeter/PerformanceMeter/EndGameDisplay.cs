@@ -12,10 +12,15 @@ namespace PerformanceMeter
     {
         public void Inject(
             MelonLogger.Instance logger,
-            float avgLifePct
+            Dictionary<float, float> lifePctFrames
         ) {
             GameObject leftScreen = InjectLeftScreen(logger);
-            InjectAverageLifePctText(logger, leftScreen, avgLifePct);
+
+            float avgLifePct = Utils.CalculateAverageLifePercent(lifePctFrames);
+            logger.Msg("Average life pct: " + avgLifePct);
+            InjectAverageLifePercentText(logger, leftScreen, avgLifePct);
+
+            InjectLifePercentGraph(logger, leftScreen, lifePctFrames);
         }
 
         /// <summary>
@@ -45,7 +50,7 @@ namespace PerformanceMeter
                 centerScreen.transform.rotation,
                 displayWrap.transform
             );
-            leftScreen.name = "pmGameEndLeftScreen";
+            leftScreen.name = "pm_gameEndLeftScreen";
 
             // Move to left side
             Vector3 platformPosition = new Vector3(0, 0, 0);
@@ -60,7 +65,7 @@ namespace PerformanceMeter
             return leftScreen;
         }
 
-        private void InjectAverageLifePctText(
+        private void InjectAverageLifePercentText(
             MelonLogger.Instance logger,
             GameObject leftScreen,
             float avgLifePct
@@ -73,11 +78,58 @@ namespace PerformanceMeter
             }
 
             root.name = "pm_avgLifePct";
+
             UnityUtil.SetTMProText(root.Find("Label"), "Average Life Percentage");
             UnityUtil.SetTMProText(root.Find("Value"), string.Format("{0:0.###}%", avgLifePct * 100));
             UnityUtil.DeleteChildren(logger, root, new string[] { "Label", "Value", "Bg" });
 
             root.gameObject.SetActive(true);
+        }
+
+        private void InjectLifePercentGraph(
+            MelonLogger.Instance logger,
+            GameObject leftScreen,
+            Dictionary<float, float> lifePctFrames
+        ) {
+            Transform root = leftScreen.transform.Find("ScoreWrap/AccuracyWrap");
+            if (root == null)
+            {
+                logger.Msg("Failed to find root transform for accuracy wrap");
+                return;
+            }
+
+            root.name = "pm_lifePctGraph";
+
+            // Copy background sprite for later
+            Sprite bgSprite = root.Find("Force/Bg").GetComponent<SpriteRenderer>().sprite;
+
+            // Remove unused pieces
+            UnityUtil.DeleteChildren(logger, root, new string[] { "title" });
+
+            float yOffset = 5.0f;
+
+            // Set title
+            Transform title = root.Find("title");
+            UnityUtil.SetTMProText(title, "Life Over Time");
+            title.localPosition += new Vector3(0, yOffset, 0);
+
+            // TODO maybe use this later, but for now hide it
+            title.gameObject.SetActive(false);
+
+            // Add graph section
+            GameObject graphBg = GameObject.Instantiate(new GameObject(), root.transform);
+            graphBg.name = "pm_lifePctGraphBg";
+            graphBg.transform.localPosition += new Vector3(0, yOffset, 0);
+
+            graphBg.AddComponent<SpriteRenderer>();
+            SpriteRenderer bgSpriteRenderer = graphBg.GetComponent<SpriteRenderer>();
+            bgSpriteRenderer.sprite = bgSprite;
+            bgSpriteRenderer.color = Color.white;
+            graphBg.transform.localScale = new Vector3(1.5f, 4.5f, 1.0f);
+
+            root.gameObject.SetActive(true);
+
+            //UnityUtil.LogComponentsRecursive(logger, leftScreen.transform);
         }
     }
 }
