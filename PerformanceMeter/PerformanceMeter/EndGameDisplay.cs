@@ -22,7 +22,6 @@ namespace PerformanceMeter
             InjectAverageLifePercentText(logger, leftScreen, avgLifePct);
 
             InjectLifePercentGraph(logger, leftScreen, lifePctFrames);
-            UnityUtil.LogGameObjectHierarchy(logger, leftScreen.transform);
         }
 
         /// <summary>
@@ -107,25 +106,19 @@ namespace PerformanceMeter
             UnityUtil.DeleteChildren(logger, parent, new string[] { "pm_avgLifePct", "title" });
 
             // Container
-            GameObject graphContainer = new GameObject("pm_lifePctGraphContainer", typeof(RectTransform));
+            GameObject graphContainer = new GameObject("pm_lifePctGraphContainer", typeof(Canvas));
             graphContainer.transform.SetParent(parent);
             var containerRect = graphContainer.GetComponent<RectTransform>();
             containerRect.localPosition = Vector3.zero;
             containerRect.localEulerAngles = Vector3.zero;
-            containerRect.anchorMin = Vector2.zero;
-            containerRect.anchorMax = Vector2.zero;
-            containerRect.sizeDelta = new Vector2(10f, 20f);
+
+            // Size
+            containerRect.anchorMin = new Vector2(0.5f, 0.5f);
+            containerRect.anchorMax = new Vector2(0.5f, 0.5f);
+            containerRect.sizeDelta = new Vector2(20.0f, 20.0f);
 
             //parent.transform.localScale = new Vector3(1.5f, 4.5f, 1.0f);
 
-            /*            // Set title
-                        Transform title = root.Find("title");
-                        UnityUtil.SetTMProText(title, "Life Over Time");
-                        title.localPosition += new Vector3(0, yOffset, 0);
-
-                        // TODO maybe use this later, but for now hide it
-                        title.gameObject.SetActive(false);
-            */
             // Add graph section
             GameObject graphBg = GameObject.Instantiate(new GameObject(), graphContainer.transform);
             graphBg.name = "pm_lifePctGraphBg";
@@ -138,10 +131,10 @@ namespace PerformanceMeter
             bgRect.sizeDelta = Vector2.zero;
 
             // Background
-            graphBg.AddComponent<SpriteRenderer>();
-            SpriteRenderer bgSpriteRenderer = graphBg.GetComponent<SpriteRenderer>();
-            bgSpriteRenderer.sprite = bgSprite;
-            bgSpriteRenderer.color = Color.white;
+            graphBg.AddComponent<Image>();
+            var bgRaw = graphBg.GetComponent<Image>();
+            bgRaw.sprite = bgSprite;
+            bgRaw.color = Color.white;
 
             // Nodes
             /*            foreach (KeyValuePair<int, float> frameData in lifePctFrames)
@@ -151,25 +144,26 @@ namespace PerformanceMeter
                         }
             */
 
-            GameObject dot = CreatePoint(containerRect, 0.0f, 1.0f);
+            GameObject dot = CreatePoint(containerRect, bgSprite, 0.0f, 1.0f);
 
-            parent.gameObject.SetActive(true);
-
-            //UnityUtil.LogComponentsRecursive(logger, leftScreen.transform);
+            //UnityUtil.LogComponentsRecursive(logger, graphContainer.transform);
         }
 
-        private GameObject CreatePoint(RectTransform graphContainer, float pctTime, float lifePct)
+        private GameObject CreatePoint(RectTransform graphContainer, Sprite sprite, float pctTime, float lifePct)
         {
             float graphWidth = graphContainer.sizeDelta.x;
             float graphHeight = graphContainer.sizeDelta.y;
 
             var dot = new GameObject("pm_graphCircle", typeof(Image));
-            dot.transform.SetParent(graphContainer.transform, false);
+            dot.transform.SetParent(graphContainer, false);
+
             var image = dot.GetComponent<Image>();
+            image.sprite = sprite;
             image.color = Color.red;
             image.enabled = true;
-
-            var rectTransform = image.GetComponent<RectTransform>();
+            
+            dot.AddComponent<RectTransform>();
+            var rectTransform = dot.GetComponent<RectTransform>();
             rectTransform.anchoredPosition = new Vector2(pctTime * graphWidth, lifePct * graphHeight);
             rectTransform.sizeDelta = new Vector2(2f, 2f);
             rectTransform.anchorMin = new Vector2(0, 0);
