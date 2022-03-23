@@ -8,14 +8,14 @@ namespace PerformanceMeterTests
     [TestClass]
     public class TestLifePercentage
     {
-        private Dictionary<float, float> lifePctFrames;
-        float songDurationMs = 10 * 1000f;
+        private Dictionary<int, float> lifePctFrames;
+        int songDurationMs = 10 * 1000;
         private float delta = 0.0001f;
 
         [TestInitialize()]
         public void Setup()
         {
-            lifePctFrames = new Dictionary<float, float>();
+            lifePctFrames = new Dictionary<int, float>();
         }
 
         [TestMethod]
@@ -42,7 +42,7 @@ namespace PerformanceMeterTests
             // 0.5 * 1 + 0.4 * 0.8 + 0.1 * 0.6 = 0.88
             lifePctFrames.Add(0, 1.0f);
             lifePctFrames.Add(songDurationMs / 2, 0.8f);
-            lifePctFrames.Add(songDurationMs * 0.9f, 0.6f);
+            lifePctFrames.Add((int) (songDurationMs * 0.9f), 0.6f);
             lifePctFrames.Add(songDurationMs, 0.6f);
 
             float avgLifePct = Utils.CalculateAverageLifePercent(lifePctFrames);

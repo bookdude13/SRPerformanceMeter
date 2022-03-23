@@ -13,9 +13,9 @@ namespace PerformanceMeter
         /// </summary>
         /// <param name="lifePctFrames">(timeMs,  pct 0.0 to 1.0)</param>
         /// <returns>0 if less than two points, else the average life over time</returns>
-        public static float CalculateAverageLifePercent(Dictionary<float, float> lifePctFrames)
+        public static float CalculateAverageLifePercent(Dictionary<int, float> lifePctFrames)
         {
-            List<float> times = lifePctFrames.Keys.ToList();
+            List<int> times = lifePctFrames.Keys.ToList();
             times.Sort();
 
             if (times.Count < 2)

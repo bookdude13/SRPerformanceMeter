@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using MelonLoader;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace PerformanceMeter
 {
@@ -12,7 +13,7 @@ namespace PerformanceMeter
     {
         public void Inject(
             MelonLogger.Instance logger,
-            Dictionary<float, float> lifePctFrames
+            Dictionary<int, float> lifePctFrames
         ) {
             GameObject leftScreen = InjectLeftScreen(logger);
 
@@ -21,6 +22,7 @@ namespace PerformanceMeter
             InjectAverageLifePercentText(logger, leftScreen, avgLifePct);
 
             InjectLifePercentGraph(logger, leftScreen, lifePctFrames);
+            UnityUtil.LogGameObjectHierarchy(logger, leftScreen.transform);
         }
 
         /// <summary>
@@ -89,47 +91,91 @@ namespace PerformanceMeter
         private void InjectLifePercentGraph(
             MelonLogger.Instance logger,
             GameObject leftScreen,
-            Dictionary<float, float> lifePctFrames
+            Dictionary<int, float> lifePctFrames
         ) {
-            Transform root = leftScreen.transform.Find("ScoreWrap/AccuracyWrap");
-            if (root == null)
+            Transform parent = leftScreen.transform.Find("ScoreWrap");
+            if (parent == null)
             {
-                logger.Msg("Failed to find root transform for accuracy wrap");
+                logger.Msg("Failed to find root transform for graph");
                 return;
             }
 
-            root.name = "pm_lifePctGraph";
-
             // Copy background sprite for later
-            Sprite bgSprite = root.Find("Force/Bg").GetComponent<SpriteRenderer>().sprite;
+            Sprite bgSprite = parent.Find("AccuracyWrap/Force/Bg").GetComponent<SpriteRenderer>().sprite;
 
             // Remove unused pieces
-            UnityUtil.DeleteChildren(logger, root, new string[] { "title" });
+            UnityUtil.DeleteChildren(logger, parent, new string[] { "pm_avgLifePct", "title" });
 
-            float yOffset = 5.0f;
+            // Container
+            GameObject graphContainer = new GameObject("pm_lifePctGraphContainer", typeof(RectTransform));
+            graphContainer.transform.SetParent(parent);
+            var containerRect = graphContainer.GetComponent<RectTransform>();
+            containerRect.localPosition = Vector3.zero;
+            containerRect.localEulerAngles = Vector3.zero;
+            containerRect.anchorMin = Vector2.zero;
+            containerRect.anchorMax = Vector2.zero;
+            containerRect.sizeDelta = new Vector2(10f, 20f);
 
-            // Set title
-            Transform title = root.Find("title");
-            UnityUtil.SetTMProText(title, "Life Over Time");
-            title.localPosition += new Vector3(0, yOffset, 0);
+            //parent.transform.localScale = new Vector3(1.5f, 4.5f, 1.0f);
 
-            // TODO maybe use this later, but for now hide it
-            title.gameObject.SetActive(false);
+            /*            // Set title
+                        Transform title = root.Find("title");
+                        UnityUtil.SetTMProText(title, "Life Over Time");
+                        title.localPosition += new Vector3(0, yOffset, 0);
 
+                        // TODO maybe use this later, but for now hide it
+                        title.gameObject.SetActive(false);
+            */
             // Add graph section
-            GameObject graphBg = GameObject.Instantiate(new GameObject(), root.transform);
+            GameObject graphBg = GameObject.Instantiate(new GameObject(), graphContainer.transform);
             graphBg.name = "pm_lifePctGraphBg";
-            graphBg.transform.localPosition += new Vector3(0, yOffset, 0);
+            graphBg.AddComponent<RectTransform>();
+            var bgRect = graphBg.GetComponent<RectTransform>();
 
+            // Fill parent
+            bgRect.anchorMin = Vector2.zero;
+            bgRect.anchorMax = Vector2.one;
+            bgRect.sizeDelta = Vector2.zero;
+
+            // Background
             graphBg.AddComponent<SpriteRenderer>();
             SpriteRenderer bgSpriteRenderer = graphBg.GetComponent<SpriteRenderer>();
             bgSpriteRenderer.sprite = bgSprite;
             bgSpriteRenderer.color = Color.white;
-            graphBg.transform.localScale = new Vector3(1.5f, 4.5f, 1.0f);
 
-            root.gameObject.SetActive(true);
+            // Nodes
+            /*            foreach (KeyValuePair<int, float> frameData in lifePctFrames)
+                        {
+                            int timeMs = frameData.Key;
+                            float lifePct = frameData.Value;
+                        }
+            */
+
+            GameObject dot = CreatePoint(containerRect, 0.0f, 1.0f);
+
+            parent.gameObject.SetActive(true);
 
             //UnityUtil.LogComponentsRecursive(logger, leftScreen.transform);
+        }
+
+        private GameObject CreatePoint(RectTransform graphContainer, float pctTime, float lifePct)
+        {
+            float graphWidth = graphContainer.sizeDelta.x;
+            float graphHeight = graphContainer.sizeDelta.y;
+
+            var dot = new GameObject("pm_graphCircle", typeof(Image));
+            dot.transform.SetParent(graphContainer.transform, false);
+            var image = dot.GetComponent<Image>();
+            image.color = Color.red;
+            image.enabled = true;
+
+            var rectTransform = image.GetComponent<RectTransform>();
+            rectTransform.anchoredPosition = new Vector2(pctTime * graphWidth, lifePct * graphHeight);
+            rectTransform.sizeDelta = new Vector2(2f, 2f);
+            rectTransform.anchorMin = new Vector2(0, 0);
+            rectTransform.anchorMax = new Vector2(0, 0);
+
+            return dot;
         }
     }
 }
