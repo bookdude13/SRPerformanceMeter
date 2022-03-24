@@ -100,7 +100,7 @@ namespace PerformanceMeter
             }
 
             // Copy background sprite for later
-            Sprite bgSprite = parent.Find("AccuracyWrap/Force/Bg").GetComponent<SpriteRenderer>().sprite;
+            //Sprite bgSprite = parent.Find("AccuracyWrap/Force/Bg").GetComponent<SpriteRenderer>().sprite;
 
             // Remove unused pieces
             UnityUtil.DeleteChildren(logger, parent, new string[] { "pm_avgLifePct", "title" });
@@ -108,6 +108,8 @@ namespace PerformanceMeter
             // Container
             GameObject graphContainer = new GameObject("pm_lifePctGraphContainer", typeof(Canvas));
             graphContainer.transform.SetParent(parent);
+            graphContainer.AddComponent<CanvasRenderer>();
+
             var containerRect = graphContainer.GetComponent<RectTransform>();
             containerRect.localPosition = Vector3.zero;
             containerRect.localEulerAngles = Vector3.zero;
@@ -115,41 +117,39 @@ namespace PerformanceMeter
             // Size
             containerRect.anchorMin = new Vector2(0.5f, 0.5f);
             containerRect.anchorMax = new Vector2(0.5f, 0.5f);
-            containerRect.sizeDelta = new Vector2(20.0f, 20.0f);
+            containerRect.sizeDelta = new Vector2(20.0f, 15.0f);
 
-            //parent.transform.localScale = new Vector3(1.5f, 4.5f, 1.0f);
-
-            // Add graph section
-            GameObject graphBg = GameObject.Instantiate(new GameObject(), graphContainer.transform);
-            graphBg.name = "pm_lifePctGraphBg";
-            graphBg.AddComponent<RectTransform>();
-            var bgRect = graphBg.GetComponent<RectTransform>();
+            // Background
+            GameObject graphBg = GameObject.Instantiate(new GameObject("pm_lifePctGraphBg", typeof(Image)), graphContainer.transform);
+            var bgImage = graphBg.GetComponent<Image>();
+            //bgImage.sprite = bgSprite;
+            bgImage.color = Color.white;
 
             // Fill parent
+            var bgRect = graphBg.GetComponent<RectTransform>();
             bgRect.anchorMin = Vector2.zero;
             bgRect.anchorMax = Vector2.one;
             bgRect.sizeDelta = Vector2.zero;
 
-            // Background
-            graphBg.AddComponent<Image>();
-            var bgRaw = graphBg.GetComponent<Image>();
-            bgRaw.sprite = bgSprite;
-            bgRaw.color = Color.white;
 
             // Nodes
-            /*            foreach (KeyValuePair<int, float> frameData in lifePctFrames)
-                        {
-                            int timeMs = frameData.Key;
-                            float lifePct = frameData.Value;
-                        }
-            */
-
-            GameObject dot = CreatePoint(containerRect, bgSprite, 0.0f, 1.0f);
-
-            //UnityUtil.LogComponentsRecursive(logger, graphContainer.transform);
+            float lastTimeMs = lifePctFrames.Last().Key;
+            RectTransform previousDot = null;
+            foreach (KeyValuePair<int, float> frameData in lifePctFrames)
+            {
+                float pctTime = frameData.Key / lastTimeMs;
+                float lifePct = frameData.Value;
+                GameObject dot = CreatePoint(containerRect, pctTime, lifePct);
+                RectTransform newRect = dot.GetComponent<RectTransform>();
+                if (previousDot != null)
+                {
+                    CreateLineSegment(containerRect, previousDot.anchoredPosition, newRect.anchoredPosition);
+                }
+                previousDot = newRect;
+            }
         }
 
-        private GameObject CreatePoint(RectTransform graphContainer, Sprite sprite, float pctTime, float lifePct)
+        private GameObject CreatePoint(RectTransform graphContainer, float pctTime, float lifePct)
         {
             float graphWidth = graphContainer.sizeDelta.x;
             float graphHeight = graphContainer.sizeDelta.y;
@@ -158,18 +158,39 @@ namespace PerformanceMeter
             dot.transform.SetParent(graphContainer, false);
 
             var image = dot.GetComponent<Image>();
-            image.sprite = sprite;
+            //image.sprite = sprite;
             image.color = Color.red;
             image.enabled = true;
-            
-            dot.AddComponent<RectTransform>();
+
+            float margin = 0.1f;
             var rectTransform = dot.GetComponent<RectTransform>();
-            rectTransform.anchoredPosition = new Vector2(pctTime * graphWidth, lifePct * graphHeight);
-            rectTransform.sizeDelta = new Vector2(2f, 2f);
+            rectTransform.anchoredPosition = new Vector2(pctTime * (graphWidth - margin), lifePct * (graphHeight - margin));
+            rectTransform.sizeDelta = new Vector2(0.04f, 0.04f);
             rectTransform.anchorMin = new Vector2(0, 0);
             rectTransform.anchorMax = new Vector2(0, 0);
 
             return dot;
+        }
+
+        private GameObject CreateLineSegment(RectTransform graphContainer, Vector2 from, Vector2 to)
+        {
+            var segment = new GameObject("pm_graphLineSegment", typeof(Image));
+            segment.transform.SetParent(graphContainer, false);
+
+            var image = segment.GetComponent<Image>();
+            image.color = Color.blue;
+            image.enabled = true;
+
+            var rectTransform = segment.GetComponent<RectTransform>();
+            var direction = (to - from).normalized;
+            var distance = Vector2.Distance(from, to);
+            rectTransform.anchorMin = new Vector2(0, 0);
+            rectTransform.anchorMax = new Vector2(0, 0);
+            rectTransform.sizeDelta = new Vector2(distance, 0.02f);
+            rectTransform.anchoredPosition = from + direction * distance * .5f;
+            rectTransform.localEulerAngles = new Vector3(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
+
+            return segment;
         }
     }
 }
