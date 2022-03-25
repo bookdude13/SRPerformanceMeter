@@ -11,7 +11,6 @@ namespace PerformanceMeter
 {
     public class MainMod : MelonMod
     {
-        private static string SCENE_NAME_STAGE = "03.Stage";
         private static string SCENE_NAME_GAME_END = "3.GameEnd";
         private static int LIFE_CHECK_FREQUENCY_MS = 100;
 
@@ -43,12 +42,30 @@ namespace PerformanceMeter
             lifePctFrames.Add(0, 1.0f);
         }
 
+        private bool IsSceneStage(string sceneName)
+        {
+            if (sceneName == null || !sceneName.Contains("."))
+            {
+                return false;
+            }
+
+            string subName = sceneName.Split('.')[1];
+            bool isNormalStage = subName.StartsWith("Stage");
+            bool isSpinStage = subName.StartsWith("Static Stage");
+            bool isSpiralStage = subName.StartsWith("Spiral Stage");
+
+            return isNormalStage || isSpinStage || isSpiralStage;
+        }
+
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)
         {
             base.OnSceneWasLoaded(buildIndex, sceneName);
 
-            if (sceneName == SCENE_NAME_STAGE)
+            LoggerInstance.Msg("Scene loaded: " + sceneName);
+
+            if (IsSceneStage(sceneName))
             {
+                LoggerInstance.Msg("Starting to track life");
                 Reset();
                 checkingLife = true;
             }
