@@ -22,6 +22,8 @@ namespace PerformanceMeter
         ) {
             GameObject leftScreen = InjectLeftScreen(logger);
 
+            InjectTitle(logger, leftScreen);
+
             float avgLifePct = Utils.CalculateAverageLifePercent(lifePctFrames);
             logger.Msg("Average life pct: " + avgLifePct);
             InjectAverageLifePercentText(logger, leftScreen, avgLifePct);
@@ -37,13 +39,6 @@ namespace PerformanceMeter
         /// <returns>Root GameObject for created left screen</returns>
         private GameObject InjectLeftScreen(MelonLogger.Instance logger)
         {
-            // "Leaderboards" object from main scene used as reference for rotation and position
-            // Leaderboards at local position (17.2, 0.0, -7.8) (global position (2.8, 2.0, -0.1)) with rotation (0.0, 0.4, 0.0, 0.9) (local rotation (0.0, 0.4, 0.0, 0.9))
-            // "Modifiers" in main menu also helpful
-            // Modifiers at local position (-17.2, 0.0, -8.3) (global position (-2.8, 2.0, -0.1)) with rotation (0.0, -0.4, 0.0, 0.9) (local rotation (0.0, -0.4, 0.0, 0.9))
-
-            // But, the end game screen is further back in z, so adjust by "No Multiplayer/ScoreWrap"
-
             GameObject displayWrap = GameObject.Find("DisplayWrap");
 
             // Center screen
@@ -65,10 +60,33 @@ namespace PerformanceMeter
             // Delete unwanted children
             UnityUtil.DeleteChildren(logger, leftScreen.transform, new string[] { "ScoreWrap" });
 
-            // Hide everything by default in ScoreWrap
-            UnityUtil.SetChildrenActive(leftScreen.transform.Find("ScoreWrap"), false);
+            // Delete unwanted children
+            UnityUtil.DeleteChildren(logger, leftScreen.transform.Find("ScoreWrap"), new string[] { "TotalScore", "Streak" });
 
             return leftScreen;
+        }
+
+        private void InjectTitle(MelonLogger.Instance logger, GameObject leftScreen)
+        {
+            Transform root = leftScreen.transform.Find("ScoreWrap/TotalScore");
+            if (root == null)
+            {
+                logger.Msg("Failed to find root transform");
+                return;
+            }
+
+            root.name = "pm_title";
+
+            var labelText = root.Find("Label").GetComponent<TMPro.TMP_Text>();
+            labelText.SetText("");
+
+            var valueText = root.Find("Value").GetComponent<TMPro.TMP_Text>();
+            valueText.SetText("Performance");
+            valueText.color = Color.white;
+
+            UnityUtil.DeleteChildren(logger, root, new string[] { "Label", "Value" });
+
+            root.gameObject.SetActive(true);
         }
 
         private void InjectAverageLifePercentText(
@@ -76,7 +94,7 @@ namespace PerformanceMeter
             GameObject leftScreen,
             float avgLifePct
         ) {
-            Transform root = leftScreen.transform.Find("ScoreWrap/TotalScore");
+            Transform root = leftScreen.transform.Find("ScoreWrap/Streak");
             if (root == null)
             {
                 logger.Msg("Failed to find root transform for average life percent text");
@@ -85,12 +103,66 @@ namespace PerformanceMeter
 
             root.name = "pm_avgLifePct";
 
-            UnityUtil.SetTMProText(root.Find("Label"), "Average Life Percentage");
-            UnityUtil.SetTMProText(root.Find("Value"), string.Format("{0:0.###}%", avgLifePct * 100));
+            var labelText = root.Find("Label").GetComponent<TMPro.TMP_Text>();
+            labelText.SetText("Average Life Percent: ");
+
+            var valueText = root.Find("Value").GetComponent<TMPro.TMP_Text>();
+            valueText.SetText(string.Format("{0:0.###}%", avgLifePct * 100));
+
+            var transforms = root.GetComponentsInChildren<Transform>();
+            foreach (var transform in transforms) {
+                transform.localPosition += new Vector3(2.0f, 0.0f, 0.0f);
+            }
+
             UnityUtil.DeleteChildren(logger, root, new string[] { "Label", "Value", "Bg" });
 
             root.gameObject.SetActive(true);
         }
+
+        /*private void InjectAverageLifePercent2(
+            MelonLogger.Instance logger,
+            GameObject leftScreen,
+            float avgLifePct
+        ) {
+            // Use same background as center screen stats
+            Sprite bgSprite = leftScreen.transform.Find("ScoreWrap/Streak/Bg")?.GetComponent<SpriteRenderer>()?.sprite;
+            
+            var lbl = leftScreen.transform.Find("ScoreWrap/Streak/Label");
+            var fonts = lbl.GetComponentsInChildren<TMPro.TMP_FontAsset>();
+            foreach (var font in fonts)
+            {
+                logger.Msg(font.name + " // " + font.boldStyle);
+            }
+
+            GameObject container = new GameObject("pm_avgLifePctContainer", typeof(Canvas));
+            container.transform.SetParent(leftScreen.transform, false);
+            var containerRect = container.GetComponent<RectTransform>();
+            containerRect.anchorMin = new Vector2(0.0f, 0.0f);
+            containerRect.anchorMax = new Vector2(1.0f, 0.0f);
+            containerRect.sizeDelta = new Vector2(10.0f, 0.7f);
+
+            GameObject bg = new GameObject("pm_avgLifePctBg", typeof(Image));
+            bg.transform.SetParent(container.transform, false);
+            var bgRect = bg.GetComponent<RectTransform>();
+            FillParent(bgRect);
+            var bgImage = bg.GetComponent<Image>();
+            bgImage.sprite = bgSprite;
+
+            GameObject text = new GameObject("pm_avgLifePctText", typeof(TMPro.TextMeshPro));
+            text.transform.SetParent(container.transform, false);
+            var textTMP = text.GetComponent<TMPro.TextMeshPro>();
+            //textTMP.font = GameObject.Instantiate(Resources.FindObjectsOfTypeAll<TMPro.TMP_FontAsset>().First(t => t.name == "NotoSansJP-Bold"));
+            textTMP.fontSize = 6.0f;
+            textTMP.alignment = TMPro.TextAlignmentOptions.Center;
+            textTMP.SetText(string.Format("Average Life Percentage: {0:0.###}%", avgLifePct * 100));
+            textTMP.enableAutoSizing = true;
+
+            var textRect = text.GetComponent<RectTransform>();
+            textRect.anchorMin = new Vector2(0.0f, 0.0f);
+            textRect.anchorMax = new Vector2(1.0f, 0.0f);
+            textRect.localPosition = Vector3.zero;
+            textRect.sizeDelta = new Vector2(5.0f, 0.4f);
+        }*/
 
         private void InjectLifePercentGraph(
             MelonLogger.Instance logger,
