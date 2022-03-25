@@ -11,6 +11,11 @@ namespace PerformanceMeter
 {
     class EndGameDisplay
     {
+        private static Color red = Color.red;
+        private static Color orange = new Color(1.0f, 0.65f, 0.0f);
+        private static Color yellowGreen = new Color(0.81f, 0.98f, 0.2f);
+        private static Color green = Color.green;
+
         public void Inject(
             MelonLogger.Instance logger,
             Dictionary<int, float> lifePctFrames
@@ -99,16 +104,12 @@ namespace PerformanceMeter
                 return;
             }
 
-            // Copy background sprite for later
-            //Sprite bgSprite = parent.Find("AccuracyWrap/Force/Bg").GetComponent<SpriteRenderer>().sprite;
-
             // Remove unused pieces
             UnityUtil.DeleteChildren(logger, parent, new string[] { "pm_avgLifePct", "title" });
 
             // Container
             GameObject graphContainer = new GameObject("pm_lifePctGraphContainer", typeof(Canvas));
-            graphContainer.transform.SetParent(parent);
-            graphContainer.AddComponent<CanvasRenderer>();
+            graphContainer.transform.SetParent(parent, false);
 
             var containerRect = graphContainer.GetComponent<RectTransform>();
             containerRect.localPosition = Vector3.zero;
@@ -119,37 +120,63 @@ namespace PerformanceMeter
             containerRect.anchorMax = new Vector2(0.5f, 0.5f);
             containerRect.sizeDelta = new Vector2(20.0f, 15.0f);
 
-            // Background
-            GameObject graphBg = GameObject.Instantiate(new GameObject("pm_lifePctGraphBg", typeof(Image)), graphContainer.transform);
-            var bgImage = graphBg.GetComponent<Image>();
-            //bgImage.sprite = bgSprite;
-            bgImage.color = Color.white;
+            // Border
+            var borderSprite = UnityUtil.CreateSpriteFromAssemblyResource(logger, "PerformanceMeter.Resources.Sprites.bg.png");
 
-            // Fill parent
-            var bgRect = graphBg.GetComponent<RectTransform>();
-            bgRect.anchorMin = Vector2.zero;
-            bgRect.anchorMax = Vector2.one;
-            bgRect.sizeDelta = Vector2.zero;
+            GameObject graphBorder = GameObject.Instantiate(new GameObject("pm_lifePctGraphBg", typeof(Image)), graphContainer.transform);
+            var borderImage = graphBorder.GetComponent<Image>();
+            borderImage.sprite = borderSprite;
+            borderImage.color = Color.white;
 
+            FillParent(graphBorder.GetComponent<RectTransform>());
+
+            // Graphable Region
+            var padding = new Vector2(0.4f, 0.4f);
+            var graphableRegion = new GameObject("pm_lifePctGraphArea", typeof(Canvas));
+            graphableRegion.transform.SetParent(graphContainer.transform, false);
+            graphableRegion.AddComponent<CanvasRenderer>();
+            
+            var graphableRect = graphableRegion.GetComponent<RectTransform>();
+            graphableRect.localPosition = Vector3.zero;
+            graphableRect.localEulerAngles = Vector3.zero;
+            graphableRect.anchorMin = new Vector2(0.5f, 0.5f);
+            graphableRect.anchorMax = new Vector2(0.5f, 0.5f);
+            graphableRect.sizeDelta = containerRect.sizeDelta - padding;
 
             // Nodes
+            var pointSprite = UnityUtil.CreateSpriteFromAssemblyResource(logger, "PerformanceMeter.Resources.Sprites.circle.png");
+
             float lastTimeMs = lifePctFrames.Last().Key;
             RectTransform previousDot = null;
+            float previousPct = 0f;
             foreach (KeyValuePair<int, float> frameData in lifePctFrames)
             {
                 float pctTime = frameData.Key / lastTimeMs;
                 float lifePct = frameData.Value;
-                GameObject dot = CreatePoint(containerRect, pctTime, lifePct);
+                GameObject dot = CreatePoint(graphableRect, pointSprite, pctTime, lifePct);
                 RectTransform newRect = dot.GetComponent<RectTransform>();
                 if (previousDot != null)
                 {
-                    CreateLineSegment(containerRect, previousDot.anchoredPosition, newRect.anchoredPosition);
+                    CreateLineSegment(
+                        graphableRect,
+                        previousDot.anchoredPosition,
+                        newRect.anchoredPosition,
+                        GetColorForPercent((previousPct + lifePct) / 2.0f)
+                    );
                 }
                 previousDot = newRect;
+                previousPct = lifePct;
             }
         }
 
-        private GameObject CreatePoint(RectTransform graphContainer, float pctTime, float lifePct)
+        private void FillParent(RectTransform rect)
+        {
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.sizeDelta = Vector2.zero;
+        }
+
+        private GameObject CreatePoint(RectTransform graphContainer, Sprite sprite, float pctTime, float lifePct)
         {
             float graphWidth = graphContainer.sizeDelta.x;
             float graphHeight = graphContainer.sizeDelta.y;
@@ -158,8 +185,11 @@ namespace PerformanceMeter
             dot.transform.SetParent(graphContainer, false);
 
             var image = dot.GetComponent<Image>();
-            //image.sprite = sprite;
-            image.color = Color.red;
+            if (sprite != null)
+            {
+                image.sprite = sprite;
+            }
+            image.color = GetColorForPercent(lifePct);
             image.enabled = true;
 
             float margin = 0.1f;
@@ -172,13 +202,13 @@ namespace PerformanceMeter
             return dot;
         }
 
-        private GameObject CreateLineSegment(RectTransform graphContainer, Vector2 from, Vector2 to)
+        private GameObject CreateLineSegment(RectTransform graphContainer, Vector2 from, Vector2 to, Color color)
         {
             var segment = new GameObject("pm_graphLineSegment", typeof(Image));
             segment.transform.SetParent(graphContainer, false);
 
             var image = segment.GetComponent<Image>();
-            image.color = Color.blue;
+            image.color = color;
             image.enabled = true;
 
             var rectTransform = segment.GetComponent<RectTransform>();
@@ -191,6 +221,30 @@ namespace PerformanceMeter
             rectTransform.localEulerAngles = new Vector3(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
 
             return segment;
+        }
+
+        private static Color GetColorForPercent(float lifePct)
+        {
+            Color color;
+
+            if (lifePct < 0.5f)
+            {
+                color = red;
+            }
+            else if (lifePct < 0.75f)
+            {
+                color = orange;
+            }
+            else if (lifePct < 0.9f)
+            {
+                color = yellowGreen;
+            }
+            else
+            {
+                color = green;
+            }
+
+            return color;
         }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using MelonLoader;
@@ -176,7 +178,6 @@ namespace PerformanceMeter
             {
                 if (whitelistedNames == null || !whitelistedNames.Contains(child.name))
                 {
-                    logger.Msg("Deleting child " + child.name);
                     GameObject.Destroy(child.gameObject);
                 }
             }
@@ -202,6 +203,27 @@ namespace PerformanceMeter
                 {
                     child.gameObject.SetActive(active);
                 }
+            }
+        }
+
+        public static Sprite CreateSpriteFromAssemblyResource(MelonLogger.Instance logger, string path)
+        {
+            try
+            {
+                Assembly assembly = Assembly.GetExecutingAssembly();
+                Stream binStream = assembly.GetManifestResourceStream(path);
+                MemoryStream mStream = new MemoryStream();
+                binStream.CopyTo(mStream);
+
+                // Size doesn't matter; will be replaced by loaded image
+                Texture2D iconTexture = new Texture2D(2, 2);
+                iconTexture.LoadImage(mStream.ToArray());
+                return Sprite.Create(iconTexture, new Rect(0.0f, 0.0f, iconTexture.width, iconTexture.height), new Vector2(0.5f, 0.5f));
+            }
+            catch (Exception e)
+            {
+                logger.Error("Failed to load sprite from path " + path, e);
+                return null;
             }
         }
     }

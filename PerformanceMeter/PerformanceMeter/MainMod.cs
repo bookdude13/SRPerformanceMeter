@@ -47,8 +47,6 @@ namespace PerformanceMeter
         {
             base.OnSceneWasLoaded(buildIndex, sceneName);
 
-            LoggerInstance.Msg("Scene loaded: " + sceneName);
-
             if (sceneName == SCENE_NAME_STAGE)
             {
                 Reset();
