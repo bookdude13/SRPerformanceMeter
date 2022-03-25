@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using MelonLoader;
@@ -69,6 +71,18 @@ namespace PerformanceMeter
                 root.rotation,
                 root.localRotation
             ));
+            if (root is RectTransform)
+            {
+                logger.Msg(string.Format(
+                    "{0} rect: {1}, anchor min {2}, max {3}, local scale: {4}, sizeDelta: {5}",
+                    tabs,
+                    ((RectTransform)root).rect,
+                    ((RectTransform)root).anchorMin,
+                    ((RectTransform)root).anchorMax,
+                    ((RectTransform)root).localScale,
+                    ((RectTransform)root).sizeDelta
+                ));
+            }
 
             // Children
             for (int i = 0; i < root.childCount; i++)
@@ -145,20 +159,6 @@ namespace PerformanceMeter
             }
         }
 
-        public static void SetTMProText(Transform parent, string text)
-        {
-            if (parent == null)
-            {
-                return;
-            }
-
-            TMPro.TMP_Text textComponent = parent.GetComponent<TMPro.TMP_Text>();
-            if (textComponent != null)
-            {
-                textComponent.SetText(text);
-            }
-        }
-
         /// <summary>
         /// Deletes all immediate children from parent whose names aren't in the given array.
         /// If a null array is given, all children are deleted.
@@ -174,9 +174,9 @@ namespace PerformanceMeter
 
             foreach (Transform child in parent)
             {
-                if (whitelistedNames == null || !whitelistedNames.Contains(child.name))
+                // Don't delete whitelisted or anything created by this mod
+                if (whitelistedNames == null || (!whitelistedNames.Contains(child.name) && !child.name.StartsWith("pm_")))
                 {
-                    logger.Msg("Deleting child " + child.name);
                     GameObject.Destroy(child.gameObject);
                 }
             }
@@ -202,6 +202,27 @@ namespace PerformanceMeter
                 {
                     child.gameObject.SetActive(active);
                 }
+            }
+        }
+
+        public static Sprite CreateSpriteFromAssemblyResource(MelonLogger.Instance logger, string path)
+        {
+            try
+            {
+                Assembly assembly = Assembly.GetExecutingAssembly();
+                Stream binStream = assembly.GetManifestResourceStream(path);
+                MemoryStream mStream = new MemoryStream();
+                binStream.CopyTo(mStream);
+
+                // Size doesn't matter; will be replaced by loaded image
+                Texture2D iconTexture = new Texture2D(2, 2);
+                iconTexture.LoadImage(mStream.ToArray());
+                return Sprite.Create(iconTexture, new Rect(0.0f, 0.0f, iconTexture.width, iconTexture.height), new Vector2(0.5f, 0.5f));
+            }
+            catch (Exception e)
+            {
+                logger.Error("Failed to load sprite from path " + path, e);
+                return null;
             }
         }
     }
