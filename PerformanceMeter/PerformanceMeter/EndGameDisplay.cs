@@ -200,6 +200,20 @@ namespace PerformanceMeter
 
             FillParent(graphBorder.GetComponent<RectTransform>());
 
+            // Side indicators 0 / 100
+            var label100 = CreateLabel(graphBorder.transform, new Vector2(-0.6f, 0.0f), "100");
+            label100.anchorMin = new Vector2(0f, 1f);
+            label100.anchorMax = new Vector2(0f, 1f);
+            label100.GetComponent<TMPro.TextMeshPro>().alignment = TMPro.TextAlignmentOptions.MidlineRight;
+
+            var label0 = CreateLabel(graphBorder.transform, new Vector2(-0.25f, 0.0f), "0");
+            label0.anchorMin = new Vector2(0f, 0f);
+            label0.anchorMax = new Vector2(0f, 0f);
+
+            // Time ticks
+            double songDuration = lifePctFrames.Last().Key - lifePctFrames.First().Key;
+            logger.Msg("Duration: " + songDuration);
+
             // Graphable Region
             var padding = new Vector2(0.4f, 0.4f);
             var graphableRegionSize = containerRect.sizeDelta - padding;
@@ -208,6 +222,30 @@ namespace PerformanceMeter
             // Nodes
             var pointSprite = UnityUtil.CreateSpriteFromAssemblyResource(logger, "PerformanceMeter.Resources.Sprites.circle.png");
             AddPointsToGraph(graphableRect, pointSprite, lifePctFrames);
+        }
+
+        /// <summary>
+        /// Creates label with text within parent, anchored at (0.5, 0.5)
+        /// </summary>
+        /// <param name="parent">Parent of new label</param>
+        /// <param name="anchoredPosition">Position of text relative to anchor point</param>
+        /// <param name="text">Text to set</param>
+        /// <returns>RectTransform of the new label</returns>
+        private RectTransform CreateLabel(Transform parent, Vector2 anchoredPosition, string text)
+        {
+            var label = new GameObject("pm_lifePctGraphLabel", typeof(TMPro.TextMeshPro));
+            label.transform.SetParent(parent, false);
+            var labelRect = label.GetComponent<RectTransform>();
+            labelRect.anchorMin = new Vector2(0.5f, 0.5f);
+            labelRect.anchorMax = new Vector2(0.5f, 0.5f);
+            labelRect.anchoredPosition = anchoredPosition;
+
+            var labelTMP = label.GetComponent<TMPro.TextMeshPro>();
+            labelTMP.fontSize = 6f;
+            labelTMP.SetText(text);
+            labelTMP.autoSizeTextContainer = true;
+
+            return labelRect;
         }
 
         private RectTransform CreateGraphableRegion(Transform graphContainer, Vector2 sizeDelta)
