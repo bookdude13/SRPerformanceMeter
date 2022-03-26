@@ -29,7 +29,8 @@ namespace PerformanceMeter
             logger.Msg("Average life pct: " + avgLifePct);
             InjectAverageLifePercentText(logger, leftScreen, avgLifePct);
 
-            InjectLifePercentGraph(logger, leftScreen, lifePctFrames);
+            int markerFrequencyMs = 30 * 1000;
+            InjectLifePercentGraph(logger, leftScreen, lifePctFrames, markerFrequencyMs);
         }
 
         /// <summary>
@@ -168,7 +169,8 @@ namespace PerformanceMeter
         private void InjectLifePercentGraph(
             MelonLogger.Instance logger,
             GameObject leftScreen,
-            Dictionary<int, float> lifePctFrames
+            Dictionary<int, float> lifePctFrames,
+            int markerFrequencyMs
         ) {
             Transform parent = leftScreen.transform.Find("ScoreWrap");
             if (parent == null)
@@ -221,15 +223,12 @@ namespace PerformanceMeter
             AddPointsToGraph(graphableRect, pointSprite, lifePctFrames);
 
             // Time markers
-            float startMs = 0;
-            float endMs = lifePctFrames.Last().Key;
-            float songDuration = endMs - startMs;
-            logger.Msg("Duration: " + songDuration + "; first frame at " + lifePctFrames.First().Key);
-            int markerFrequencySec = 3;
-            int markerFrequencyMs = markerFrequencySec * 1000;
-            for (var markerMs = markerFrequencyMs; markerMs < endMs; markerMs += markerFrequencyMs)
+            // Treat last recorded life event as end of song (ignoring outros etc)
+            float songDurationMs = lifePctFrames.Last().Key;
+            logger.Msg("Duration: " + songDurationMs + "; first frame at " + lifePctFrames.First().Key);
+            for (var markerMs = markerFrequencyMs; markerMs < songDurationMs; markerMs += markerFrequencyMs)
             {
-                float pctX = markerMs / songDuration;
+                float pctX = markerMs / songDurationMs;
                 CreateTimeMarker(graphableRect, pctX);
             }
         }
