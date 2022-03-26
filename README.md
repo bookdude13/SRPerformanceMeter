@@ -9,7 +9,7 @@ More features coming soon!
 
 
 ## Setup
-1. Prepare Synth Riders for the use with mods by following the [installation instructions for [MelonLoader](https://wiki.synthriderz.com/en/guides/installing-mods)
+1. Prepare Synth Riders for the use with mods by following the installation instructions for [MelonLoader](https://wiki.synthriderz.com/en/guides/installing-mods)
 2. Grab the newest version of SRPerformanceMeter from releases and extract it to ./SynthRiders/Mods (create new directory if it doesn't exist)
 3. Enjoy!
 
