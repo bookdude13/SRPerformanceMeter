@@ -16,6 +16,7 @@ namespace PerformanceMeter
         private static Color yellowGreen = new Color(0.81f, 0.98f, 0.2f);
         private static Color green = Color.green;
         private static Color colorMarker = new Color(0.6f, 0.6f, 0.6f, 0.8f);
+        private static Color colorAverageLine = new Color(0.9f, 0.9f, 0.9f, 0.5f);
 
         public void Inject(
             MelonLogger.Instance logger,
@@ -30,7 +31,7 @@ namespace PerformanceMeter
             InjectAverageLifePercentText(logger, leftScreen, avgLifePct);
 
             int markerFrequencyMs = 30 * 1000;
-            InjectLifePercentGraph(logger, leftScreen, lifePctFrames, markerFrequencyMs);
+            InjectLifePercentGraph(logger, leftScreen, lifePctFrames, avgLifePct, markerFrequencyMs);
         }
 
         /// <summary>
@@ -170,6 +171,7 @@ namespace PerformanceMeter
             MelonLogger.Instance logger,
             GameObject leftScreen,
             Dictionary<int, float> lifePctFrames,
+            float avgLifePct,
             int markerFrequencyMs
         ) {
             Transform parent = leftScreen.transform.Find("ScoreWrap");
@@ -231,6 +233,9 @@ namespace PerformanceMeter
                 float pctX = markerMs / songDurationMs;
                 CreateTimeMarker(graphableRect, pctX);
             }
+
+            // Average line
+            CreateAverageLine(graphableRect, avgLifePct);
         }
 
         /// <summary>
@@ -349,6 +354,26 @@ namespace PerformanceMeter
             rectTransform.anchorMax = new Vector2(0, 0);
 
             return marker;
+        }
+
+        private GameObject CreateAverageLine(RectTransform graphContainer, float avgLifePct)
+        {
+            var graphHeight = graphContainer.sizeDelta.y;
+
+            var line = new GameObject("pm_graphAverageLine", typeof(Image));
+            line.transform.SetParent(graphContainer, false);
+
+            var image = line.GetComponent<Image>();
+            image.color = colorAverageLine;
+            image.enabled = true;
+
+            var rectTransform = line.GetComponent<RectTransform>();
+            rectTransform.anchorMin = new Vector2(0, 0);
+            rectTransform.anchorMax = new Vector2(1, 0);
+            rectTransform.sizeDelta = new Vector2(0f, 0.04f);
+            rectTransform.anchoredPosition = new Vector2(0f, avgLifePct * graphHeight);
+
+            return line;
         }
 
         private GameObject CreateLineSegment(RectTransform graphContainer, Vector2 from, Vector2 to, Color color)
