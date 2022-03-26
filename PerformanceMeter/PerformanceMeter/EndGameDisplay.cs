@@ -15,6 +15,7 @@ namespace PerformanceMeter
         private static Color orange = new Color(1.0f, 0.65f, 0.0f);
         private static Color yellowGreen = new Color(0.81f, 0.98f, 0.2f);
         private static Color green = Color.green;
+        private static Color colorMarker = new Color(0.6f, 0.6f, 0.6f, 0.8f);
 
         public void Inject(
             MelonLogger.Instance logger,
@@ -210,10 +211,6 @@ namespace PerformanceMeter
             label0.anchorMin = new Vector2(0f, 0f);
             label0.anchorMax = new Vector2(0f, 0f);
 
-            // Time ticks
-            double songDuration = lifePctFrames.Last().Key - lifePctFrames.First().Key;
-            logger.Msg("Duration: " + songDuration);
-
             // Graphable Region
             var padding = new Vector2(0.4f, 0.4f);
             var graphableRegionSize = containerRect.sizeDelta - padding;
@@ -222,6 +219,19 @@ namespace PerformanceMeter
             // Nodes
             var pointSprite = UnityUtil.CreateSpriteFromAssemblyResource(logger, "PerformanceMeter.Resources.Sprites.circle.png");
             AddPointsToGraph(graphableRect, pointSprite, lifePctFrames);
+
+            // Time markers
+            float startMs = 0;
+            float endMs = lifePctFrames.Last().Key;
+            float songDuration = endMs - startMs;
+            logger.Msg("Duration: " + songDuration + "; first frame at " + lifePctFrames.First().Key);
+            int markerFrequencySec = 3;
+            int markerFrequencyMs = markerFrequencySec * 1000;
+            for (var markerMs = markerFrequencyMs; markerMs < endMs; markerMs += markerFrequencyMs)
+            {
+                float pctX = markerMs / songDuration;
+                CreateTimeMarker(graphableRect, pctX);
+            }
         }
 
         /// <summary>
@@ -312,14 +322,34 @@ namespace PerformanceMeter
             image.color = GetColorForPercent(lifePct);
             image.enabled = true;
 
-            float margin = 0.1f;
             var rectTransform = dot.GetComponent<RectTransform>();
-            rectTransform.anchoredPosition = new Vector2(pctTime * (graphWidth - margin), lifePct * (graphHeight - margin));
-            rectTransform.sizeDelta = new Vector2(0.04f, 0.04f);
+            rectTransform.anchoredPosition = new Vector2(pctTime * graphWidth, lifePct * graphHeight);
+            rectTransform.sizeDelta = new Vector2(0.04f, 0.06f);
             rectTransform.anchorMin = new Vector2(0, 0);
             rectTransform.anchorMax = new Vector2(0, 0);
 
             return dot;
+        }
+
+        private GameObject CreateTimeMarker(RectTransform graphContainer, float pctTime)
+        {
+            float graphWidth = graphContainer.sizeDelta.x;
+            float graphHeight = graphContainer.sizeDelta.y;
+
+            var marker = new GameObject("pm_graphTimeMark", typeof(Image));
+            marker.transform.SetParent(graphContainer, false);
+
+            var image = marker.GetComponent<Image>();
+            image.color = colorMarker;
+            image.enabled = true;
+
+            var rectTransform = marker.GetComponent<RectTransform>();
+            rectTransform.anchoredPosition = new Vector2(pctTime * graphWidth, 0.0f);
+            rectTransform.sizeDelta = new Vector2(0.03f, 0.5f);
+            rectTransform.anchorMin = new Vector2(0, 0);
+            rectTransform.anchorMax = new Vector2(0, 0);
+
+            return marker;
         }
 
         private GameObject CreateLineSegment(RectTransform graphContainer, Vector2 from, Vector2 to, Color color)
@@ -336,7 +366,7 @@ namespace PerformanceMeter
             var distance = Vector2.Distance(from, to);
             rectTransform.anchorMin = new Vector2(0, 0);
             rectTransform.anchorMax = new Vector2(0, 0);
-            rectTransform.sizeDelta = new Vector2(distance, 0.02f);
+            rectTransform.sizeDelta = new Vector2(distance, 0.04f);
             rectTransform.anchoredPosition = from + direction * distance * .5f;
             rectTransform.localEulerAngles = new Vector3(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
 
