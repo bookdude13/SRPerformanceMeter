@@ -186,8 +186,6 @@ namespace PerformanceMeter
             var containerRect = graphContainer.GetComponent<RectTransform>();
             containerRect.localPosition = Vector3.zero;
             containerRect.localEulerAngles = Vector3.zero;
-
-            // Size
             containerRect.anchorMin = new Vector2(0.5f, 0.5f);
             containerRect.anchorMax = new Vector2(0.5f, 0.5f);
             containerRect.sizeDelta = new Vector2(20.0f, 15.0f);
@@ -198,26 +196,38 @@ namespace PerformanceMeter
             GameObject graphBorder = GameObject.Instantiate(new GameObject("pm_lifePctGraphBg", typeof(Image)), graphContainer.transform);
             var borderImage = graphBorder.GetComponent<Image>();
             borderImage.sprite = borderSprite;
-            borderImage.color = Color.white;
+            borderImage.color = Color.black;
 
             FillParent(graphBorder.GetComponent<RectTransform>());
 
             // Graphable Region
             var padding = new Vector2(0.4f, 0.4f);
+            var graphableRegionSize = containerRect.sizeDelta - padding;
+            var graphableRect = CreateGraphableRegion(graphContainer.transform, graphableRegionSize);
+
+            // Nodes
+            var pointSprite = UnityUtil.CreateSpriteFromAssemblyResource(logger, "PerformanceMeter.Resources.Sprites.circle.png");
+            AddPointsToGraph(graphableRect, pointSprite, lifePctFrames);
+        }
+
+        private RectTransform CreateGraphableRegion(Transform graphContainer, Vector2 sizeDelta)
+        {
             var graphableRegion = new GameObject("pm_lifePctGraphArea", typeof(Canvas));
             graphableRegion.transform.SetParent(graphContainer.transform, false);
             graphableRegion.AddComponent<CanvasRenderer>();
-            
+
             var graphableRect = graphableRegion.GetComponent<RectTransform>();
             graphableRect.localPosition = Vector3.zero;
             graphableRect.localEulerAngles = Vector3.zero;
             graphableRect.anchorMin = new Vector2(0.5f, 0.5f);
             graphableRect.anchorMax = new Vector2(0.5f, 0.5f);
-            graphableRect.sizeDelta = containerRect.sizeDelta - padding;
+            graphableRect.sizeDelta = sizeDelta;
 
-            // Nodes
-            var pointSprite = UnityUtil.CreateSpriteFromAssemblyResource(logger, "PerformanceMeter.Resources.Sprites.circle.png");
+            return graphableRect;
+        }
 
+        private void AddPointsToGraph(RectTransform graphableRect, Sprite pointSprite, Dictionary<int, float> lifePctFrames)
+        {
             float lastTimeMs = lifePctFrames.Last().Key;
             RectTransform previousDot = null;
             float previousPct = 0f;
