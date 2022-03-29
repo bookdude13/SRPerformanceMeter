@@ -18,6 +18,15 @@ namespace PerformanceMeter
         private static Color colorMarker = new Color(0.6f, 0.6f, 0.6f, 0.8f);
         private static Color colorAverageLine = new Color(0.9f, 0.9f, 0.9f, 0.5f);
 
+        private bool showAverageLine;
+        private int markerPeriodMs;
+
+        public EndGameDisplay(bool showAverageLine, int markerPeriodMs)
+        {
+            this.showAverageLine = showAverageLine;
+            this.markerPeriodMs = markerPeriodMs;
+        }
+
         public void Inject(
             MelonLogger.Instance logger,
             Dictionary<int, float> lifePctFrames
@@ -30,8 +39,7 @@ namespace PerformanceMeter
             logger.Msg("Average life pct: " + avgLifePct);
             InjectAverageLifePercentText(logger, leftScreen, avgLifePct);
 
-            int markerFrequencyMs = 30 * 1000;
-            InjectLifePercentGraph(logger, leftScreen, lifePctFrames, avgLifePct, markerFrequencyMs);
+            InjectLifePercentGraph(logger, leftScreen, lifePctFrames, avgLifePct);
         }
 
         /// <summary>
@@ -171,8 +179,7 @@ namespace PerformanceMeter
             MelonLogger.Instance logger,
             GameObject leftScreen,
             Dictionary<int, float> lifePctFrames,
-            float avgLifePct,
-            int markerFrequencyMs
+            float avgLifePct
         ) {
             Transform parent = leftScreen.transform.Find("ScoreWrap");
             if (parent == null)
@@ -228,14 +235,16 @@ namespace PerformanceMeter
             // Treat last recorded life event as end of song (ignoring outros etc)
             float songDurationMs = lifePctFrames.Last().Key;
             logger.Msg("Duration: " + songDurationMs + "; first frame at " + lifePctFrames.First().Key);
-            for (var markerMs = markerFrequencyMs; markerMs < songDurationMs; markerMs += markerFrequencyMs)
+            for (var markerMs = markerPeriodMs; markerMs < songDurationMs; markerMs += markerPeriodMs)
             {
                 float pctX = markerMs / songDurationMs;
                 CreateTimeMarker(graphableRect, pctX);
             }
 
-            // Average line
-            CreateAverageLine(graphableRect, avgLifePct);
+            if (showAverageLine)
+            {
+                CreateAverageLine(graphableRect, avgLifePct);
+            }
         }
 
         /// <summary>
