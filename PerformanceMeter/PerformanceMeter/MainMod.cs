@@ -13,8 +13,10 @@ namespace PerformanceMeter
     public class MainMod : MelonMod
     {
         private static string SCENE_NAME_GAME_END = "3.GameEnd";
+        private static int MARKER_PERIOD_MIN_MS = 1000;
+        private static int MARKER_PERIOD_MAX_MS = 5 * 60 * 1000;
         private static int LIFE_CHECK_MIN_PERIOD_MS = 50;
-        private static int LIFE_CHECK_MAX_PERIOD_MS = 5000;
+        private static int LIFE_CHECK_MAX_PERIOD_MS = 5 * 1000;
 
         public static MelonPreferences_Category prefs;
         private static bool showAverageLine = true;
@@ -63,11 +65,12 @@ namespace PerformanceMeter
 
                 var markerPeriodMsEntry = prefs.CreateEntry("markerPeriodMs", 30000, "Marker Period (ms)");
                 markerPeriodMs = markerPeriodMsEntry.Value;
-                if (markerPeriodMs < 1000)
+                if (markerPeriodMs < MARKER_PERIOD_MIN_MS)
                 {
-                    _logger.Msg("markerPeroidMs is less than 1000; did you put in seconds instead of milliseconds? Using min of 1000ms");
-                    markerPeriodMs = 1000;
+                    _logger.Msg("markerPeroidMs is less than minimum; did you put in seconds instead of milliseconds? Using min of " + MARKER_PERIOD_MIN_MS);
+                    markerPeriodMs = MARKER_PERIOD_MIN_MS;
                 }
+                markerPeriodMs = Math.Min(MARKER_PERIOD_MAX_MS, markerPeriodMs);
 
                 var lifeCheckPeriodMsEntry = prefs.CreateEntry("lifeCheckPeriodMs", 100, "Life Check Period (ms)");
                 lifeCheckPeriodMs = Math.Max(LIFE_CHECK_MIN_PERIOD_MS, lifeCheckPeriodMsEntry.Value);
