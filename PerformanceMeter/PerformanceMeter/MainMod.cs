@@ -6,11 +6,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MelonLoader;
+using PerformanceMeter.Events;
+using PerformanceMeter.Messages;
 using UnityEngine;
+using Newtonsoft.Json;
 
 namespace PerformanceMeter
 {
-    public class MainMod : MelonMod
+    public class MainMod : MelonMod, ISynthRidersEventHandler
     {
         private static string SCENE_NAME_GAME_END = "3.GameEnd";
         private static int MARKER_PERIOD_MIN_MS = 1000;
@@ -25,7 +28,9 @@ namespace PerformanceMeter
 
         private static MelonLogger.Instance _logger;
         private static Dictionary<int, float> lifePctFrames;
+        private static Dictionary<int, float> lifePctFramesWebSocket;
         private static EndGameDisplay endGameDisplay;
+        private static WebsocketManager websocketManager;
         private static bool checkingLife = false;
         private static int timeSinceLastCheckMs = 0;
         private static int accumulatedTimeMs = 0;
@@ -37,7 +42,10 @@ namespace PerformanceMeter
             SetupConfig();
 
             lifePctFrames = new Dictionary<int, float>();
+            lifePctFramesWebSocket = new Dictionary<int, float>();
             endGameDisplay = new EndGameDisplay(showAverageLine, markerPeriodMs);
+
+            websocketManager = new WebsocketManager(_logger, "ws://localhost:9000", this);
         }
 
         private void SetupConfig()
@@ -51,7 +59,7 @@ namespace PerformanceMeter
             }
             catch (Exception e)
             {
-                _logger.Msg("Failed to remove old config file");
+                _logger.Msg("Failed to remove old config file: " + e.Message);
             }
 
             try
@@ -117,7 +125,11 @@ namespace PerformanceMeter
 
             LoggerInstance.Msg("Scene loaded: " + sceneName);
 
-            if (IsSceneStage(sceneName))
+            if (sceneName == "0.AWarning")
+            {
+                websocketManager.Start();
+            }
+            else if (IsSceneStage(sceneName))
             {
                 LoggerInstance.Msg("Starting to track life");
                 Reset();
@@ -157,9 +169,21 @@ namespace PerformanceMeter
                 timeSinceLastCheckMs = 0;
             }
         }
+
+        public override void OnApplicationQuit()
+        {
+            base.OnApplicationQuit();
+            websocketManager.Shutdown();
+        }
+
         public static void Log(string message)
         {
             _logger.Msg(message);
+        }
+
+        public void OnSongStart(EventDataSongStart data)
+        {
+            _logger.Msg("Song started! " + JsonConvert.SerializeObject(data));
         }
     }
 }
