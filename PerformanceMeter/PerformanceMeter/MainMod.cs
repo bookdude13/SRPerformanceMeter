@@ -30,7 +30,7 @@ namespace PerformanceMeter
         private static Dictionary<int, float> lifePctFrames;
         private static Dictionary<int, float> lifePctFramesWebSocket;
         private static EndGameDisplay endGameDisplay;
-        private static WebsocketManager websocketManager;
+        private static SynthRidersEventsManager websocketManager;
         private static bool checkingLife = false;
         private static int timeSinceLastCheckMs = 0;
         private static int accumulatedTimeMs = 0;
@@ -45,7 +45,7 @@ namespace PerformanceMeter
             lifePctFramesWebSocket = new Dictionary<int, float>();
             endGameDisplay = new EndGameDisplay(showAverageLine, markerPeriodMs);
 
-            websocketManager = new WebsocketManager(_logger, "ws://localhost:9000", this);
+            websocketManager = new SynthRidersEventsManager(_logger, "ws://localhost:9000", this);
         }
 
         private void SetupConfig()
@@ -127,7 +127,8 @@ namespace PerformanceMeter
 
             if (sceneName == "0.AWarning")
             {
-                websocketManager.Start();
+                // Start websocket client after the server is likely started
+                websocketManager.StartAsync();
             }
             else if (IsSceneStage(sceneName))
             {
@@ -181,9 +182,42 @@ namespace PerformanceMeter
             _logger.Msg(message);
         }
 
-        public void OnSongStart(EventDataSongStart data)
+
+        /* Handle events */
+
+        void ISynthRidersEventHandler.OnSongStart(EventDataSongStart data)
         {
             _logger.Msg("Song started! " + JsonConvert.SerializeObject(data));
+        }
+
+        void ISynthRidersEventHandler.OnSongEnd(EventDataSongEnd data)
+        {
+            _logger.Msg("Song ended! " + JsonConvert.SerializeObject(data));
+        }
+
+        void ISynthRidersEventHandler.OnPlayTime(EventDataPlayTime data)
+        {
+            _logger.Msg("Play time " + JsonConvert.SerializeObject(data));
+        }
+
+        void ISynthRidersEventHandler.OnNoteHit(EventDataNoteHit data)
+        {
+            _logger.Msg("Note hit " + JsonConvert.SerializeObject(data));
+        }
+
+        void ISynthRidersEventHandler.OnNoteMiss(EventDataNoteMiss data)
+        {
+            _logger.Msg("Note miss " + JsonConvert.SerializeObject(data));
+        }
+
+        void ISynthRidersEventHandler.OnSceneChange(EventDataSceneChange data)
+        {
+            _logger.Msg("Scene change to " + data.sceneName);
+        }
+
+        void ISynthRidersEventHandler.OnReturnToMenu()
+        {
+            _logger.Msg("Return to menu");
         }
     }
 }

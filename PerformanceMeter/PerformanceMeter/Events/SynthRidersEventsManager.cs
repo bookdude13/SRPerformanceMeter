@@ -12,14 +12,14 @@ using PerformanceMeter.Events;
 namespace PerformanceMeter
 {
     // Events coming from SynthRiders-Websockets-Mod
-    class WebsocketManager
+    class SynthRidersEventsManager
     {
         private readonly MelonLogger.Instance logger;
         private readonly WebSocket socket;
         private bool isConnected = false;
         private ISynthRidersEventHandler eventHandler;
 
-        public WebsocketManager(MelonLogger.Instance logger, string connectionString, ISynthRidersEventHandler eventHandler)
+        public SynthRidersEventsManager(MelonLogger.Instance logger, string connectionString, ISynthRidersEventHandler eventHandler)
         {
             this.logger = logger;
             this.eventHandler = eventHandler;
@@ -32,13 +32,15 @@ namespace PerformanceMeter
             socket.OnClose += HandleClose;
         }
 
-        public void Start()
+        public void StartAsync()
         {
             try
             {
-                // Close is safe to call even if already closed
-                logger.Msg("Closing websocket if open");
-                socket.Close();
+                if (isConnected)
+                {
+                    logger.Msg("Closing open websocket...");
+                    socket.Close();
+                }
 
                 logger.Msg("Connecting to websocket at " + socket.Url);
                 socket.ConnectAsync();
@@ -60,19 +62,43 @@ namespace PerformanceMeter
 
         private void HandleMessage(object sender, MessageEventArgs messageArgs)
         {
-            logger.Msg(string.Format(
-                "Handling message. isText? {0}. Data: {1}",
-                messageArgs.IsText,
-                messageArgs.Data ?? "null"
-            ));
-            
             try
             {
+                // Parse top layer as generic to get type, then parse the specific message data if needed.
                 var genericEvent = JsonConvert.DeserializeObject<SynthRidersEvent<object>>(messageArgs.Data);
                 if (genericEvent.eventType == "SongStart")
                 {
                     var songStart = JsonConvert.DeserializeObject<SynthRidersEvent<EventDataSongStart>>(messageArgs.Data);
                     eventHandler.OnSongStart(songStart.data);
+                }
+                else if (genericEvent.eventType == "SongEnd")
+                {
+                    var songEnd = JsonConvert.DeserializeObject<SynthRidersEvent<EventDataSongEnd>>(messageArgs.Data);
+                    eventHandler.OnSongEnd(songEnd.data);
+                }
+                else if (genericEvent.eventType == "PlayTime")
+                {
+                    var playTime = JsonConvert.DeserializeObject<SynthRidersEvent<EventDataPlayTime>>(messageArgs.Data);
+                    eventHandler.OnPlayTime(playTime.data);
+                }
+                else if (genericEvent.eventType == "NoteHit")
+                {
+                    var noteHit = JsonConvert.DeserializeObject<SynthRidersEvent<EventDataNoteHit>>(messageArgs.Data);
+                    eventHandler.OnNoteHit(noteHit.data);
+                }
+                else if (genericEvent.eventType == "NoteMiss")
+                {
+                    var noteMiss = JsonConvert.DeserializeObject<SynthRidersEvent<EventDataNoteMiss>>(messageArgs.Data);
+                    eventHandler.OnNoteMiss(noteMiss.data);
+                }
+                else if (genericEvent.eventType == "SceneChange")
+                {
+                    var sceneChange = JsonConvert.DeserializeObject<SynthRidersEvent<EventDataSceneChange>>(messageArgs.Data);
+                    eventHandler.OnSceneChange(sceneChange.data);
+                }
+                else if (genericEvent.eventType == "ReturnToMenu")
+                {
+                    eventHandler.OnReturnToMenu();
                 }
             }
             catch (Exception e)
