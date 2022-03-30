@@ -13,6 +13,18 @@ using Newtonsoft.Json;
 
 namespace PerformanceMeter
 {
+    public class LifePercentFrame
+    {
+        public readonly int timeMs;
+        public readonly float lifePercent;
+
+        public LifePercentFrame(int timeMs, float lifePercent)
+        {
+            this.timeMs = timeMs;
+            this.lifePercent = lifePercent;
+        }
+    }
+
     public class MainMod : MelonMod, ISynthRidersEventHandler
     {
         private static string SCENE_NAME_GAME_END = "3.GameEnd";
@@ -27,13 +39,12 @@ namespace PerformanceMeter
         private static int lifeCheckPeriodMs = 100;
 
         private static MelonLogger.Instance _logger;
-        private static Dictionary<int, float> lifePctFrames;
-        private static Dictionary<int, float> lifePctFramesWebSocket;
+        private static List<LifePercentFrame> lifePctFrames;
         private static EndGameDisplay endGameDisplay;
         private static SynthRidersEventsManager websocketManager;
-        private static bool checkingLife = false;
-        private static int timeSinceLastCheckMs = 0;
+        
         private static int accumulatedTimeMs = 0;
+        private static bool inSong = false;
 
         public override void OnApplicationStart()
         {
@@ -41,8 +52,7 @@ namespace PerformanceMeter
 
             SetupConfig();
 
-            lifePctFrames = new Dictionary<int, float>();
-            lifePctFramesWebSocket = new Dictionary<int, float>();
+            lifePctFrames = new List<LifePercentFrame>();
             endGameDisplay = new EndGameDisplay(showAverageLine, markerPeriodMs);
 
             websocketManager = new SynthRidersEventsManager(_logger, "ws://localhost:9000", this);
@@ -97,11 +107,9 @@ namespace PerformanceMeter
 
         private void Reset()
         {
-            checkingLife = false;
-            timeSinceLastCheckMs = 0;
             accumulatedTimeMs = 0;
             lifePctFrames.Clear();
-            lifePctFrames.Add(0, 1.0f);
+            lifePctFrames.Add(new LifePercentFrame(0, 1.0f));
         }
 
         private bool IsSceneStage(string sceneName)
@@ -130,12 +138,6 @@ namespace PerformanceMeter
                 // Start websocket client after the server is likely started
                 websocketManager.StartAsync();
             }
-            else if (IsSceneStage(sceneName))
-            {
-                LoggerInstance.Msg("Starting to track life");
-                Reset();
-                checkingLife = true;
-            }
             else if (sceneName == SCENE_NAME_GAME_END)
             {
                 if (lifePctFrames.Count <= 0)
@@ -152,23 +154,11 @@ namespace PerformanceMeter
 
         public override void OnUpdate()
         {
-            if (!checkingLife) return;
-            if (GameControlManager.IsOnGameOver)
-            {
-                checkingLife = false;
-                return;
-            }
+            if (!inSong) return;
             if (!GameControlManager.ImPlaying()) return;
 
             int deltaMs = (int)(Time.deltaTime * 1000);
             accumulatedTimeMs += deltaMs;
-            timeSinceLastCheckMs += deltaMs;
-            if (timeSinceLastCheckMs > lifeCheckPeriodMs)
-            {
-                float lifePct = Synth.Utils.LifeBarHelper.GetScalePercent(0);
-                lifePctFrames.Add(accumulatedTimeMs, lifePct);
-                timeSinceLastCheckMs = 0;
-            }
         }
 
         public override void OnApplicationQuit()
@@ -188,26 +178,35 @@ namespace PerformanceMeter
         void ISynthRidersEventHandler.OnSongStart(EventDataSongStart data)
         {
             _logger.Msg("Song started! " + JsonConvert.SerializeObject(data));
+            Reset();
+            inSong = true;
         }
 
         void ISynthRidersEventHandler.OnSongEnd(EventDataSongEnd data)
         {
             _logger.Msg("Song ended! " + JsonConvert.SerializeObject(data));
+            inSong = false;
         }
 
         void ISynthRidersEventHandler.OnPlayTime(EventDataPlayTime data)
         {
-            _logger.Msg("Play time " + JsonConvert.SerializeObject(data));
+            _logger.Msg("Play time " + data.playTimeMS);
         }
 
         void ISynthRidersEventHandler.OnNoteHit(EventDataNoteHit data)
         {
-            _logger.Msg("Note hit " + JsonConvert.SerializeObject(data));
+            if (inSong)
+            {
+                lifePctFrames.Add(new LifePercentFrame(accumulatedTimeMs, data.lifeBarPercent));
+            }
         }
 
         void ISynthRidersEventHandler.OnNoteMiss(EventDataNoteMiss data)
         {
-            _logger.Msg("Note miss " + JsonConvert.SerializeObject(data));
+            if (inSong)
+            {
+                lifePctFrames.Add(new LifePercentFrame(accumulatedTimeMs, data.lifeBarPercent));
+            }
         }
 
         void ISynthRidersEventHandler.OnSceneChange(EventDataSceneChange data)
@@ -218,6 +217,7 @@ namespace PerformanceMeter
         void ISynthRidersEventHandler.OnReturnToMenu()
         {
             _logger.Msg("Return to menu");
+            inSong = false;
         }
     }
 }

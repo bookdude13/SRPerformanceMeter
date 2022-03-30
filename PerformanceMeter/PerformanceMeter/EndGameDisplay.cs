@@ -29,7 +29,7 @@ namespace PerformanceMeter
 
         public void Inject(
             MelonLogger.Instance logger,
-            Dictionary<int, float> lifePctFrames
+            List<LifePercentFrame> lifePctFrames
         ) {
             GameObject leftScreen = InjectLeftScreen(logger);
 
@@ -178,7 +178,7 @@ namespace PerformanceMeter
         private void InjectLifePercentGraph(
             MelonLogger.Instance logger,
             GameObject leftScreen,
-            Dictionary<int, float> lifePctFrames,
+            List<LifePercentFrame> lifePctFrames,
             float avgLifePct
         ) {
             Transform parent = leftScreen.transform.Find("ScoreWrap");
@@ -233,8 +233,8 @@ namespace PerformanceMeter
 
             // Time markers
             // Treat last recorded life event as end of song (ignoring outros etc)
-            float songDurationMs = lifePctFrames.Last().Key;
-            logger.Msg("Duration: " + songDurationMs + "; first frame at " + lifePctFrames.First().Key);
+            float songDurationMs = lifePctFrames.Last().timeMs;
+            logger.Msg("Duration: " + songDurationMs + "; first frame at " + lifePctFrames.First().timeMs);
             for (var markerMs = markerPeriodMs; markerMs < songDurationMs; markerMs += markerPeriodMs)
             {
                 float pctX = markerMs / songDurationMs;
@@ -287,15 +287,15 @@ namespace PerformanceMeter
             return graphableRect;
         }
 
-        private void AddPointsToGraph(RectTransform graphableRect, Sprite pointSprite, Dictionary<int, float> lifePctFrames)
+        private void AddPointsToGraph(RectTransform graphableRect, Sprite pointSprite, List<LifePercentFrame> lifePctFrames)
         {
-            float lastTimeMs = lifePctFrames.Last().Key;
+            float lastTimeMs = lifePctFrames.Last().timeMs;
             RectTransform previousDot = null;
             float previousPct = 0f;
-            foreach (KeyValuePair<int, float> frameData in lifePctFrames)
+            foreach (LifePercentFrame frameData in lifePctFrames)
             {
-                float pctTime = frameData.Key / lastTimeMs;
-                float lifePct = frameData.Value;
+                float pctTime = frameData.timeMs / lastTimeMs;
+                float lifePct = frameData.lifePercent;
                 GameObject dot = CreatePoint(graphableRect, pointSprite, pctTime, lifePct);
                 RectTransform newRect = dot.GetComponent<RectTransform>();
                 if (previousDot != null)

@@ -11,7 +11,7 @@ namespace PerformanceMeter.Messages
         public int score = 0; // score _after_ note hit
         public int combo = 0;
         public int multiplier = 1;
-        public float completed = 1.0f; // may be wrong
+        public float completed = 1.0f; // perfect + normal + bad (all notes hit except fails)
         public float lifeBarPercent = 1.0f;
     }
 }

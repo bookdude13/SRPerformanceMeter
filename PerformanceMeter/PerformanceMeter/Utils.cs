@@ -9,28 +9,25 @@ namespace PerformanceMeter
     public static class Utils
     {
         /// <summary>
-        /// Assumes frame is present for first and last times (bookended). Returns 0 if less than two points
+        /// Assumes frame is present for first and last times (book-ended). Returns 0 if less than two points
         /// </summary>
-        /// <param name="lifePctFrames">(timeMs,  pct 0.0 to 1.0)</param>
+        /// <param name="lifePctFrames">Ordered list of time/pct values</param>
         /// <returns>0 if less than two points, else the average life over time</returns>
-        public static float CalculateAverageLifePercent(Dictionary<int, float> lifePctFrames)
+        public static float CalculateAverageLifePercent(List<LifePercentFrame> lifePctFrames)
         {
-            List<int> times = lifePctFrames.Keys.ToList();
-            times.Sort();
-
-            if (times.Count < 2)
+            if (lifePctFrames.Count < 2)
             {
                 return 0f;
             }
 
-            float songDurationMs = times.Last() - times.First();
+            float songDurationMs = lifePctFrames.Last().timeMs - lifePctFrames.First().timeMs;
 
             float sum = 0.0f;
-            for (var i = 0; i < times.Count - 1; i++)
+            for (var i = 0; i < lifePctFrames.Count - 1; i++)
             {
                 // Accumulate percentage value for the full duration of this chunk
-                float timeDiffMs = times[i + 1] - times[i];
-                float lifePct = lifePctFrames[times[i]];
+                float timeDiffMs = lifePctFrames[i + 1].timeMs - lifePctFrames[i].timeMs;
+                float lifePct = lifePctFrames[i].lifePercent;
                 sum += timeDiffMs * lifePct;
             }
 
