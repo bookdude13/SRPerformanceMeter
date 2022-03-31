@@ -10,5 +10,6 @@ namespace PerformanceMeter.Messages
     {
         public int multiplier = 1; // multiplier before miss reset
         public float lifeBarPercent = 1.0f;
+        public float playTimeMS = 0.0f; // Current play time
     }
 }

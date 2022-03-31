@@ -15,10 +15,10 @@ namespace PerformanceMeter
 {
     public class LifePercentFrame
     {
-        public readonly int timeMs;
+        public readonly float timeMs;
         public readonly float lifePercent;
 
-        public LifePercentFrame(int timeMs, float lifePercent)
+        public LifePercentFrame(float timeMs, float lifePercent)
         {
             this.timeMs = timeMs;
             this.lifePercent = lifePercent;
@@ -30,20 +30,16 @@ namespace PerformanceMeter
         private static string SCENE_NAME_GAME_END = "3.GameEnd";
         private static int MARKER_PERIOD_MIN_MS = 1000;
         private static int MARKER_PERIOD_MAX_MS = 5 * 60 * 1000;
-        private static int LIFE_CHECK_MIN_PERIOD_MS = 50;
-        private static int LIFE_CHECK_MAX_PERIOD_MS = 5 * 1000;
 
         public static MelonPreferences_Category prefs;
         private static bool showAverageLine = true;
         private static int markerPeriodMs = 30000;
-        private static int lifeCheckPeriodMs = 100;
 
         private static MelonLogger.Instance _logger;
         private static List<LifePercentFrame> lifePctFrames;
         private static EndGameDisplay endGameDisplay;
         private static SynthRidersEventsManager websocketManager;
         
-        private static int accumulatedTimeMs = 0;
         private static bool inSong = false;
 
         public override void OnApplicationStart()
@@ -90,14 +86,9 @@ namespace PerformanceMeter
                 }
                 markerPeriodMs = Math.Min(MARKER_PERIOD_MAX_MS, markerPeriodMs);
 
-                var lifeCheckPeriodMsEntry = prefs.CreateEntry("lifeCheckPeriodMs", 100, "Life Check Period (ms)");
-                lifeCheckPeriodMs = Math.Max(LIFE_CHECK_MIN_PERIOD_MS, lifeCheckPeriodMsEntry.Value);
-                lifeCheckPeriodMs = Math.Min(LIFE_CHECK_MAX_PERIOD_MS, lifeCheckPeriodMs);
-
                 _logger.Msg("Config Loaded");
                 _logger.Msg("  Show average line? " + showAverageLine);
                 _logger.Msg("  markerPeriodMs: " + markerPeriodMs);
-                _logger.Msg("  lifeCheckPeriodMs: " + lifeCheckPeriodMs);
             }
             catch (Exception e)
             {
@@ -107,7 +98,6 @@ namespace PerformanceMeter
 
         private void Reset()
         {
-            accumulatedTimeMs = 0;
             lifePctFrames.Clear();
             lifePctFrames.Add(new LifePercentFrame(0, 1.0f));
         }
@@ -152,15 +142,6 @@ namespace PerformanceMeter
             }
         }
 
-        public override void OnUpdate()
-        {
-            if (!inSong) return;
-            if (!GameControlManager.ImPlaying()) return;
-
-            int deltaMs = (int)(Time.deltaTime * 1000);
-            accumulatedTimeMs += deltaMs;
-        }
-
         public override void OnApplicationQuit()
         {
             base.OnApplicationQuit();
@@ -197,7 +178,7 @@ namespace PerformanceMeter
         {
             if (inSong)
             {
-                lifePctFrames.Add(new LifePercentFrame(accumulatedTimeMs, data.lifeBarPercent));
+                lifePctFrames.Add(new LifePercentFrame(data.playTimeMS, data.lifeBarPercent));
             }
         }
 
@@ -205,7 +186,7 @@ namespace PerformanceMeter
         {
             if (inSong)
             {
-                lifePctFrames.Add(new LifePercentFrame(accumulatedTimeMs, data.lifeBarPercent));
+                lifePctFrames.Add(new LifePercentFrame(data.playTimeMS, data.lifeBarPercent));
             }
         }
 

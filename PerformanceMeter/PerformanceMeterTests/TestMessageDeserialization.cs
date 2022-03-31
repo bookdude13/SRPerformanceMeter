@@ -36,8 +36,8 @@ namespace PerformanceMeterTests
                 'data': {
                     'song': 'ANIMA',
                     'difficulty': 'Master',
-                    'author': 'bookdude13',
-                    'beatMapper': 'KK964',
+                    'author': 'ReoNa',
+                    'beatMapper': 'bookdude13',
                     'length': 269.19,
                     'bpm': 192.7,
                     'albumArt': ''
@@ -50,8 +50,8 @@ namespace PerformanceMeterTests
             Assert.IsNotNull(parsedEvent.data);
             Assert.AreEqual("ANIMA", parsedEvent.data.song);
             Assert.AreEqual("Master", parsedEvent.data.difficulty);
-            Assert.AreEqual("bookdude13", parsedEvent.data.author);
-            Assert.AreEqual("KK964", parsedEvent.data.beatMapper);
+            Assert.AreEqual("ReoNa", parsedEvent.data.author);
+            Assert.AreEqual("bookdude13", parsedEvent.data.beatMapper);
             Assert.AreEqual(269.19, parsedEvent.data.length, 0.00001);
             Assert.AreEqual(192.7, parsedEvent.data.bpm, 0.00001);
             Assert.AreEqual("", parsedEvent.data.albumArt);
@@ -114,7 +114,8 @@ namespace PerformanceMeterTests
                     'combo': 312,
                     'multiplier': 3,
                     'completed': 1.0,
-                    'lifeBarPercent': 0.83333
+                    'lifeBarPercent': 0.83333,
+                    'playTimeMS': 1234.56
                 }
             }";
 
@@ -127,6 +128,7 @@ namespace PerformanceMeterTests
             Assert.AreEqual(3, parsedEvent.data.multiplier);
             Assert.AreEqual(1.0, parsedEvent.data.completed, 0.00001);
             Assert.AreEqual(0.83333, parsedEvent.data.lifeBarPercent, 0.00001);
+            Assert.AreEqual(1234.56, parsedEvent.data.playTimeMS, 0.0001);
         }
 
         [TestMethod]
@@ -137,7 +139,8 @@ namespace PerformanceMeterTests
                 'eventType': 'NoteMiss',
                 'data': {
                     'multiplier': 3,
-                    'lifeBarPercent': 0.83333
+                    'lifeBarPercent': 0.83333,
+                    'playTimeMS': 1234.56
                 }
             }";
 
@@ -147,6 +150,7 @@ namespace PerformanceMeterTests
             Assert.IsNotNull(parsedEvent.data);
             Assert.AreEqual(3, parsedEvent.data.multiplier);
             Assert.AreEqual(0.83333, parsedEvent.data.lifeBarPercent, 0.00001);
+            Assert.AreEqual(1234.56, parsedEvent.data.playTimeMS, 0.0001);
         }
 
         [TestMethod]

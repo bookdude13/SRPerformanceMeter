@@ -13,5 +13,6 @@ namespace PerformanceMeter.Messages
         public int multiplier = 1;
         public float completed = 1.0f; // perfect + normal + bad (all notes hit except fails)
         public float lifeBarPercent = 1.0f;
+        public float playTimeMS = 0.0f; // Current play time
     }
 }
