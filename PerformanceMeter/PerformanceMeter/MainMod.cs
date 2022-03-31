@@ -6,10 +6,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MelonLoader;
-using PerformanceMeter.Events;
-using PerformanceMeter.Messages;
+using SynthRidersWebsockets.Events;
 using UnityEngine;
-using Newtonsoft.Json;
 
 namespace PerformanceMeter
 {
@@ -158,14 +156,14 @@ namespace PerformanceMeter
 
         void ISynthRidersEventHandler.OnSongStart(EventDataSongStart data)
         {
-            _logger.Msg("Song started! " + JsonConvert.SerializeObject(data));
+            _logger.Msg("Song started!");
             Reset();
             inSong = true;
         }
 
         void ISynthRidersEventHandler.OnSongEnd(EventDataSongEnd data)
         {
-            _logger.Msg("Song ended! " + JsonConvert.SerializeObject(data));
+            _logger.Msg("Song ended!");
             inSong = false;
         }
 
