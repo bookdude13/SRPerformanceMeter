@@ -11,18 +11,6 @@ using UnityEngine;
 
 namespace PerformanceMeter
 {
-    public class LifePercentFrame
-    {
-        public readonly float timeMs;
-        public readonly float lifePercent;
-
-        public LifePercentFrame(float timeMs, float lifePercent)
-        {
-            this.timeMs = timeMs;
-            this.lifePercent = lifePercent;
-        }
-    }
-
     public class MainMod : MelonMod, ISynthRidersEventHandler
     {
         private static string SCENE_NAME_GAME_END = "3.GameEnd";
@@ -34,7 +22,7 @@ namespace PerformanceMeter
         private static int markerPeriodMs = 30000;
 
         private static MelonLogger.Instance _logger;
-        private static List<LifePercentFrame> lifePctFrames;
+        private static List<PercentFrame> lifePctFrames;
         private static EndGameDisplay endGameDisplay;
         private static SynthRidersEventsManager websocketManager;
         
@@ -46,7 +34,7 @@ namespace PerformanceMeter
 
             SetupConfig();
 
-            lifePctFrames = new List<LifePercentFrame>();
+            lifePctFrames = new List<PercentFrame>();
             endGameDisplay = new EndGameDisplay(showAverageLine, markerPeriodMs);
 
             websocketManager = new SynthRidersEventsManager(_logger, "ws://localhost:9000", this);
@@ -97,7 +85,7 @@ namespace PerformanceMeter
         private void Reset()
         {
             lifePctFrames.Clear();
-            lifePctFrames.Add(new LifePercentFrame(0, 1.0f));
+            lifePctFrames.Add(new PercentFrame(0, 1.0f));
         }
 
         private bool IsSceneStage(string sceneName)
@@ -156,7 +144,7 @@ namespace PerformanceMeter
         {
             if (inSong)
             {
-                lifePctFrames.Add(new LifePercentFrame(data.playTimeMS, data.lifeBarPercent));
+                lifePctFrames.Add(new PercentFrame(data.playTimeMS, data.lifeBarPercent));
             }
         }
 
@@ -164,7 +152,7 @@ namespace PerformanceMeter
         {
             if (inSong)
             {
-                lifePctFrames.Add(new LifePercentFrame(data.playTimeMS, data.lifeBarPercent));
+                lifePctFrames.Add(new PercentFrame(data.playTimeMS, data.lifeBarPercent));
             }
         }
 
@@ -180,7 +168,7 @@ namespace PerformanceMeter
                 }
                 else
                 {
-                    LoggerInstance.Msg(lifePctFrames.Count + " frames recorded.");
+                    LoggerInstance.Msg(lifePctFrames.Count + " life pct frames recorded.");
                     endGameDisplay.Inject(LoggerInstance, lifePctFrames);
                 }
             }

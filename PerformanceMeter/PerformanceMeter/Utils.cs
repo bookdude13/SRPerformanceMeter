@@ -11,24 +11,24 @@ namespace PerformanceMeter
         /// <summary>
         /// Assumes frame is present for first and last times (book-ended). Returns 0 if less than two points
         /// </summary>
-        /// <param name="lifePctFrames">Ordered list of time/pct values</param>
-        /// <returns>0 if less than two points, else the average life over time</returns>
-        public static float CalculateAverageLifePercent(List<LifePercentFrame> lifePctFrames)
+        /// <param name="pctFrames">Ordered list of time/pct values</param>
+        /// <returns>0 if less than two points, else the average percent over time</returns>
+        public static float CalculateAveragePercent(List<PercentFrame> pctFrames)
         {
-            if (lifePctFrames.Count < 2)
+            if (pctFrames.Count < 2)
             {
                 return 0f;
             }
 
-            float songDurationMs = lifePctFrames.Last().timeMs - lifePctFrames.First().timeMs;
+            float songDurationMs = pctFrames.Last().timeMs - pctFrames.First().timeMs;
 
             float sum = 0.0f;
-            for (var i = 0; i < lifePctFrames.Count - 1; i++)
+            for (var i = 0; i < pctFrames.Count - 1; i++)
             {
                 // Accumulate percentage value for the full duration of this chunk
-                float timeDiffMs = lifePctFrames[i + 1].timeMs - lifePctFrames[i].timeMs;
-                float lifePct = lifePctFrames[i].lifePercent;
-                sum += timeDiffMs * lifePct;
+                float timeDiffMs = pctFrames[i + 1].timeMs - pctFrames[i].timeMs;
+                float percentOfTotal = pctFrames[i].percentOfTotal;
+                sum += timeDiffMs * percentOfTotal;
             }
 
             return sum / songDurationMs;

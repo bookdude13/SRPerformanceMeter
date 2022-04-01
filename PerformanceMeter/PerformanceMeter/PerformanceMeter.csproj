@@ -72,6 +72,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EndGameDisplay.cs" />
+    <Compile Include="PercentFrame.cs" />
     <Compile Include="UnityUtil.cs" />
     <Compile Include="MainMod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
