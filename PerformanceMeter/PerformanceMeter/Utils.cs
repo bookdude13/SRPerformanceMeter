@@ -8,6 +8,22 @@ namespace PerformanceMeter
 {
     public static class Utils
     {
+        private static bool IsSceneStage(string sceneName)
+        {
+            if (sceneName == null || !sceneName.Contains("."))
+            {
+                return false;
+            }
+
+            string subName = sceneName.Split('.')[1];
+            bool isNormalStage = subName.StartsWith("Stage");
+            bool isSpinStage = subName.StartsWith("Static Stage");
+            bool isSpiralStage = subName.StartsWith("Spiral Stage");
+
+            return isNormalStage || isSpinStage || isSpiralStage;
+        }
+
+
         /// <summary>
         /// Assumes frame is present for first and last times (book-ended). Returns 0 if less than two points
         /// </summary>

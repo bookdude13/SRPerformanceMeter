@@ -88,21 +88,6 @@ namespace PerformanceMeter
             lifePctFrames.Add(new PercentFrame(0, 1.0f));
         }
 
-        private bool IsSceneStage(string sceneName)
-        {
-            if (sceneName == null || !sceneName.Contains("."))
-            {
-                return false;
-            }
-
-            string subName = sceneName.Split('.')[1];
-            bool isNormalStage = subName.StartsWith("Stage");
-            bool isSpinStage = subName.StartsWith("Static Stage");
-            bool isSpiralStage = subName.StartsWith("Spiral Stage");
-
-            return isNormalStage || isSpinStage || isSpiralStage;
-        }
-
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)
         {
             base.OnSceneWasLoaded(buildIndex, sceneName);
