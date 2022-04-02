@@ -48,17 +48,28 @@ namespace PerformanceMeter
                 return;
             }
 
-            RectTransform lifePctGraphContainer = CreateGraphContainer(logger, parent, "pm_lifePctContainer");
-
             // Life percent
+            InjectLifePercentGraph(logger, parent, clonedStatTransform.gameObject, lifePctFrames);
+
+            // Total score
+            RectTransform totalScoreGraphContainer = CreateGraphContainer(logger, parent, "pm_totalScoreContainer");
+            InjectPercentGraph(logger, totalScoreGraphContainer, scorePctFrames, pct => Color.white);
+
+            clonedStatTransform.gameObject.SetActive(false);
+        }
+
+        private void InjectLifePercentGraph(
+            MelonLogger.Instance logger,
+            Transform parent,
+            GameObject clonedStatGameObject,
+            List<PercentFrame> lifePctFrames
+        ) {
             float avgLifePct = Utils.CalculateAveragePercent(lifePctFrames);
             logger.Msg("Average life pct: " + avgLifePct);
-            //InjectAveragePercentText(logger, leftScreen, "Average Life Percent: ", avgLifePct);
-            InjectAverageStat(logger, lifePctGraphContainer, clonedStatTransform.gameObject, "Average Life Percent: ", avgLifePct);
-            clonedStatTransform.gameObject.SetActive(false);
 
-            InjectPercentGraph(logger, lifePctGraphContainer, lifePctFrames, avgLifePct);
-
+            RectTransform lifePctGraphContainer = CreateGraphContainer(logger, parent, "pm_lifePctContainer");
+            InjectAverageStat(logger, lifePctGraphContainer, clonedStatGameObject, "Average Life Percent: ", avgLifePct);
+            InjectPercentGraph(logger, lifePctGraphContainer, lifePctFrames, GetColorForLifePercent, avgLifePct);
         }
 
         /// <summary>
@@ -171,7 +182,8 @@ namespace PerformanceMeter
             MelonLogger.Instance logger,
             Transform parent,
             List<PercentFrame> percentFrames,
-            float averagePercent
+            Func<float, Color> fnGetColor,
+            float averagePercent = -1f
         ) {
             // Remove unused pieces
             UnityUtil.DeleteChildren(logger, parent, new string[] { "pm_avgPct", "title" });
@@ -215,7 +227,7 @@ namespace PerformanceMeter
 
             // Nodes
             var pointSprite = UnityUtil.CreateSpriteFromAssemblyResource(logger, "PerformanceMeter.Resources.Sprites.circle.png");
-            AddPointsToGraph(graphableRect, pointSprite, percentFrames);
+            AddPointsToGraph(graphableRect, pointSprite, percentFrames, fnGetColor);
 
             // Time markers
             // Treat last recorded event as end of song (ignoring outros etc)
@@ -227,7 +239,8 @@ namespace PerformanceMeter
                 CreateTimeMarker(graphableRect, pctX);
             }
 
-            if (config.showAverageLine)
+            // Average line
+            if (config.showAverageLine && averagePercent >= 0)
             {
                 CreateAverageLine(graphableRect, averagePercent);
             }
@@ -273,8 +286,12 @@ namespace PerformanceMeter
             return graphableRect;
         }
 
-        private void AddPointsToGraph(RectTransform graphableRect, Sprite pointSprite, List<PercentFrame> pctFrames, bool changeColors = true)
-        {
+        private void AddPointsToGraph(
+            RectTransform graphableRect,
+            Sprite pointSprite,
+            List<PercentFrame> pctFrames,
+            Func<float, Color> fnGetColor
+        ) {
             float lastTimeMs = pctFrames.Last().timeMs;
             RectTransform previousDot = null;
             float previousPct = 0f;
@@ -282,17 +299,17 @@ namespace PerformanceMeter
             {
                 float percentTime = frameData.timeMs / lastTimeMs;
                 float percentOfTotal = frameData.percentOfTotal;
-                Color color = changeColors ? GetColorForPercent(percentOfTotal) : Color.white;
+                Color color = fnGetColor(percentOfTotal);
                 GameObject dot = CreatePoint(graphableRect, pointSprite, percentTime, percentOfTotal, color);
                 RectTransform newRect = dot.GetComponent<RectTransform>();
                 if (previousDot != null)
                 {
-                    color = changeColors ? GetColorForPercent((previousPct + percentOfTotal) / 2.0f) : Color.white;
+                    Color lineColor = fnGetColor((previousPct + percentOfTotal) / 2.0f);
                     CreateLineSegment(
                         graphableRect,
                         previousDot.anchoredPosition,
                         newRect.anchoredPosition,
-                        color
+                        lineColor
                     );
                 }
                 previousDot = newRect;
@@ -394,7 +411,7 @@ namespace PerformanceMeter
             return segment;
         }
 
-        private static Color GetColorForPercent(float lifePct)
+        private static Color GetColorForLifePercent(float lifePct)
         {
             Color color;
 
