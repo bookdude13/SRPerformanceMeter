@@ -10,8 +10,8 @@ namespace PerformanceMeterTests
     public class TestLifePercentage
     {
         private List<PercentFrame> percentFrames;
-        int songDurationMs = 10 * 1000;
-        private float delta = 0.0001f;
+        private readonly int songDurationMs = 10 * 1000;
+        private readonly float delta = 0.0001f;
 
         [TestInitialize()]
         public void Setup()

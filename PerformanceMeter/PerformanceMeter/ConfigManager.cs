@@ -10,8 +10,8 @@ namespace PerformanceMeter
 {
     public class ConfigManager
     {
-        private static int MARKER_PERIOD_MIN_MS = 1000;
-        private static int MARKER_PERIOD_MAX_MS = 5 * 60 * 1000;
+        private static readonly int MARKER_PERIOD_MIN_MS = 1000;
+        private static readonly int MARKER_PERIOD_MAX_MS = 5 * 60 * 1000;
 
         public MelonPreferences_Category prefs;
         public bool isEnabled = true;

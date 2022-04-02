@@ -26,17 +26,17 @@ namespace PerformanceMeterTests
             };
 
             var percentFrames = cumulativeFrames.Select(cumulative => cumulative.ToPercentFrame(6.0f));
-            Assert.AreEqual(0.0f, percentFrames.ElementAt(0).timeMs);
-            Assert.AreEqual(0.0f, percentFrames.ElementAt(0).percentOfTotal, delta);
+            Assert.AreEqual(0.0f, percentFrames.ElementAt(0).TimeMs);
+            Assert.AreEqual(0.0f, percentFrames.ElementAt(0).PercentOfTotal, delta);
 
-            Assert.AreEqual(1.0f, percentFrames.ElementAt(1).timeMs);
-            Assert.AreEqual(0.25f, percentFrames.ElementAt(1).percentOfTotal, delta);
+            Assert.AreEqual(1.0f, percentFrames.ElementAt(1).TimeMs);
+            Assert.AreEqual(0.25f, percentFrames.ElementAt(1).PercentOfTotal, delta);
 
-            Assert.AreEqual(2.0f, percentFrames.ElementAt(2).timeMs);
-            Assert.AreEqual(0.3333f, percentFrames.ElementAt(2).percentOfTotal, delta);
+            Assert.AreEqual(2.0f, percentFrames.ElementAt(2).TimeMs);
+            Assert.AreEqual(0.3333f, percentFrames.ElementAt(2).PercentOfTotal, delta);
 
-            Assert.AreEqual(3.5f, percentFrames.ElementAt(3).timeMs);
-            Assert.AreEqual(1.0f, percentFrames.ElementAt(3).percentOfTotal, delta);
+            Assert.AreEqual(3.5f, percentFrames.ElementAt(3).TimeMs);
+            Assert.AreEqual(1.0f, percentFrames.ElementAt(3).PercentOfTotal, delta);
         }
     }
 }

@@ -37,14 +37,14 @@ namespace PerformanceMeter
                 return 0f;
             }
 
-            float songDurationMs = pctFrames.Last().timeMs - pctFrames.First().timeMs;
+            float songDurationMs = pctFrames.Last().TimeMs - pctFrames.First().TimeMs;
 
             float sum = 0.0f;
             for (var i = 0; i < pctFrames.Count - 1; i++)
             {
                 // Accumulate percentage value for the full duration of this chunk
-                float timeDiffMs = pctFrames[i + 1].timeMs - pctFrames[i].timeMs;
-                float percentOfTotal = pctFrames[i].percentOfTotal;
+                float timeDiffMs = pctFrames[i + 1].TimeMs - pctFrames[i].TimeMs;
+                float percentOfTotal = pctFrames[i].PercentOfTotal;
                 sum += timeDiffMs * percentOfTotal;
             }
 

@@ -14,7 +14,7 @@ namespace PerformanceMeter
 {
     public class MainMod : MelonMod, ISynthRidersEventHandler
     {
-        private static string SCENE_NAME_GAME_END = "3.GameEnd";
+        private static readonly string SCENE_NAME_GAME_END = "3.GameEnd";
 
         private static MelonLogger.Instance _logger;
         private static ConfigManager config;
@@ -82,7 +82,7 @@ namespace PerformanceMeter
                     _logger.Msg(totalScoreFrames.Count + " score frames recorded.");
                     _logger.Msg(totalPerfectFrames.Count + " accuracy frames recorded.");
 
-                    float targetScore = totalScoreFrames.Last().amount;
+                    float targetScore = totalScoreFrames.Last().Amount;
                     var scorePctFrames = totalScoreFrames.Select(scoreFrame => scoreFrame.ToPercentFrame(targetScore)).ToList();
 
                     endGameDisplay.Inject(LoggerInstance, lifePctFrames, scorePctFrames);

@@ -19,7 +19,7 @@ namespace PerformanceMeter
         private static Color colorMarker = new Color(0.6f, 0.6f, 0.6f, 0.8f);
         private static Color colorAverageLine = new Color(0.9f, 0.9f, 0.9f, 0.5f);
 
-        private ConfigManager config;
+        private readonly ConfigManager config;
 
         public EndGameDisplay(ConfigManager config)
         {
@@ -232,7 +232,7 @@ namespace PerformanceMeter
 
             // Time markers
             // Treat last recorded event as end of song (ignoring outros etc)
-            float songDurationMs = percentFrames.Last().timeMs;
+            float songDurationMs = percentFrames.Last().TimeMs;
             logger.Msg("Duration: " + songDurationMs);
             for (var markerMs = config.markerPeriodMs; markerMs < songDurationMs; markerMs += config.markerPeriodMs)
             {
@@ -293,13 +293,13 @@ namespace PerformanceMeter
             List<PercentFrame> pctFrames,
             Func<float, Color> fnGetColor
         ) {
-            float lastTimeMs = pctFrames.Last().timeMs;
+            float lastTimeMs = pctFrames.Last().TimeMs;
             RectTransform previousDot = null;
             float previousPct = 0f;
             foreach (PercentFrame frameData in pctFrames)
             {
-                float percentTime = frameData.timeMs / lastTimeMs;
-                float percentOfTotal = frameData.percentOfTotal;
+                float percentTime = frameData.TimeMs / lastTimeMs;
+                float percentOfTotal = frameData.PercentOfTotal;
                 Color color = fnGetColor(percentOfTotal);
                 GameObject dot = CreatePoint(graphableRect, pointSprite, percentTime, percentOfTotal, color);
                 RectTransform newRect = dot.GetComponent<RectTransform>();

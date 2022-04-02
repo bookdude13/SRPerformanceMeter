@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LiteDB;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,18 +9,19 @@ namespace PerformanceMeter.Frames
 {
     public class CumulativeFrame
     {
-        public readonly float timeMs;
-        public readonly float amount;
+        public float TimeMs { get; }
+        public float Amount { get; }
 
+        [BsonCtor]
         public CumulativeFrame(float timeMs, float amount)
         {
-            this.timeMs = timeMs;
-            this.amount = amount;
+            this.TimeMs = timeMs;
+            this.Amount = amount;
         }
 
         public PercentFrame ToPercentFrame(float totalAmount)
         {
-            return new PercentFrame(timeMs, amount / totalAmount);
+            return new PercentFrame(TimeMs, Amount / totalAmount);
         }
     }
 }
