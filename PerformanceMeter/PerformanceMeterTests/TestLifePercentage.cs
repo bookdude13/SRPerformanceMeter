@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using PerformanceMeter;
+using PerformanceMeter.Frames;
 
 namespace PerformanceMeterTests
 {

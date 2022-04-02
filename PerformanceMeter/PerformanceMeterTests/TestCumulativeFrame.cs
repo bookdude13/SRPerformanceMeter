@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PerformanceMeter;
+using PerformanceMeter.Frames;
 using System;
 using System.Collections.Generic;
 using System.Linq;

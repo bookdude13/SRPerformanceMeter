@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MelonLoader;
+using PerformanceMeter.Frames;
 using SynthRidersWebsockets.Events;
 using UnityEngine;
 

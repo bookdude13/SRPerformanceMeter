@@ -77,9 +77,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConfigManager.cs" />
-    <Compile Include="CumulativeFrame.cs" />
+    <Compile Include="Frames\CumulativeFrame.cs" />
     <Compile Include="EndGameDisplay.cs" />
-    <Compile Include="PercentFrame.cs" />
+    <Compile Include="Frames\PercentFrame.cs" />
     <Compile Include="UnityUtil.cs" />
     <Compile Include="MainMod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
