@@ -18,6 +18,7 @@ namespace PerformanceMeter
         private static int MARKER_PERIOD_MAX_MS = 5 * 60 * 1000;
 
         public static MelonPreferences_Category prefs;
+        private static bool isEnabled = true;
         private static bool showAverageLine = true;
         private static int markerPeriodMs = 30000;
 
@@ -33,6 +34,12 @@ namespace PerformanceMeter
             _logger = LoggerInstance;
 
             SetupConfig();
+
+            if (!isEnabled)
+            {
+                _logger.Msg("Disabled in config");
+                return;
+            }
 
             lifePctFrames = new List<PercentFrame>();
             endGameDisplay = new EndGameDisplay(showAverageLine, markerPeriodMs);
@@ -60,6 +67,9 @@ namespace PerformanceMeter
 
                 prefs.SetFilePath("UserData/PerformanceMeter/PerformanceMeter.cfg");
 
+                var isEnabledEntry = prefs.CreateEntry("isEnabled", true, "Enabled");
+                isEnabled = isEnabledEntry.Value;
+
                 var showAverageLineEntry = prefs.CreateEntry("showAverageLine", true, "Show Average Line");
                 showAverageLine = showAverageLineEntry.Value;
 
@@ -73,6 +83,7 @@ namespace PerformanceMeter
                 markerPeriodMs = Math.Min(MARKER_PERIOD_MAX_MS, markerPeriodMs);
 
                 _logger.Msg("Config Loaded");
+                _logger.Msg("  Enabled? " + isEnabled);
                 _logger.Msg("  Show average line? " + showAverageLine);
                 _logger.Msg("  markerPeriodMs: " + markerPeriodMs);
             }
@@ -92,7 +103,7 @@ namespace PerformanceMeter
         {
             base.OnSceneWasLoaded(buildIndex, sceneName);
 
-            if (sceneName == "0.AWarning")
+            if (isEnabled && sceneName == "0.AWarning")
             {
                 // Start websocket client after the server is likely started
                 websocketManager.StartAsync();
@@ -102,7 +113,18 @@ namespace PerformanceMeter
         public override void OnApplicationQuit()
         {
             base.OnApplicationQuit();
-            websocketManager.Shutdown();
+
+            if (websocketManager != null && isEnabled)
+            {
+                try
+                {
+                    websocketManager.Shutdown();
+                }
+                catch (Exception e)
+                {
+                    _logger.Msg("Failed to shutdown websocket manager: " + e.ToString());
+                }
+            }
         }
 
         /* Handle events */
