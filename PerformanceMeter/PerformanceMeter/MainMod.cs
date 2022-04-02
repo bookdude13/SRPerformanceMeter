@@ -103,10 +103,27 @@ namespace PerformanceMeter
         {
             base.OnSceneWasLoaded(buildIndex, sceneName);
 
-            if (isEnabled && sceneName == "0.AWarning")
+            if (!isEnabled)
+            {
+                return;
+            }
+
+            if (sceneName == "0.AWarning")
             {
                 // Start websocket client after the server is likely started
                 websocketManager.StartAsync();
+            }
+            else if (sceneName == SCENE_NAME_GAME_END)
+            {
+                if (lifePctFrames.Count <= 0)
+                {
+                    LoggerInstance.Msg("lifePctFrames empty, ignoring");
+                }
+                else
+                {
+                    LoggerInstance.Msg(lifePctFrames.Count + " life pct frames recorded.");
+                    endGameDisplay.Inject(LoggerInstance, lifePctFrames);
+                }
             }
         }
 
@@ -164,21 +181,7 @@ namespace PerformanceMeter
         }
 
         void ISynthRidersEventHandler.OnSceneChange(EventDataSceneChange data)
-        {
-            _logger.Msg("Scene change to " + data.sceneName);
-
-            if (data.sceneName == SCENE_NAME_GAME_END)
-            {
-                if (lifePctFrames.Count <= 0)
-                {
-                    LoggerInstance.Msg("lifePctFrames empty, ignoring");
-                }
-                else
-                {
-                    LoggerInstance.Msg(lifePctFrames.Count + " life pct frames recorded.");
-                    endGameDisplay.Inject(LoggerInstance, lifePctFrames);
-                }
-            }
+        {            
         }
 
         void ISynthRidersEventHandler.OnReturnToMenu()
