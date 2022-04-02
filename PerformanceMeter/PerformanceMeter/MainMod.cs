@@ -20,6 +20,7 @@ namespace PerformanceMeter
 
         private static List<PercentFrame> lifePctFrames;
         private static List<CumulativeFrame> totalScoreFrames;
+        private static List<CumulativeFrame> totalPerfectFrames;
         private static EndGameDisplay endGameDisplay;
         private static SynthRidersEventsManager websocketManager;
         
@@ -40,6 +41,7 @@ namespace PerformanceMeter
 
             lifePctFrames = new List<PercentFrame>();
             totalScoreFrames = new List<CumulativeFrame>();
+            totalPerfectFrames = new List<CumulativeFrame>();
             endGameDisplay = new EndGameDisplay(config);
             websocketManager = new SynthRidersEventsManager(_logger, "ws://localhost:9000", this);
         }
@@ -49,6 +51,12 @@ namespace PerformanceMeter
         {
             lifePctFrames.Clear();
             lifePctFrames.Add(new PercentFrame(0, 1.0f));
+
+            totalScoreFrames.Clear();
+            totalScoreFrames.Add(new CumulativeFrame(0, 0));
+
+            totalPerfectFrames.Clear();
+            totalPerfectFrames.Add(new CumulativeFrame(0, 0));
         }
 
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)
@@ -67,14 +75,16 @@ namespace PerformanceMeter
             }
             else if (sceneName == SCENE_NAME_GAME_END)
             {
-                if (lifePctFrames.Count <= 0)
+                if (lifePctFrames.Count > 0)
                 {
-                    LoggerInstance.Msg("lifePctFrames empty, ignoring");
-                }
-                else
-                {
-                    LoggerInstance.Msg(lifePctFrames.Count + " life pct frames recorded.");
-                    endGameDisplay.Inject(LoggerInstance, lifePctFrames);
+                    _logger.Msg(lifePctFrames.Count + " life pct frames recorded.");
+                    _logger.Msg(totalScoreFrames.Count + " score frames recorded.");
+                    _logger.Msg(totalPerfectFrames.Count + " accuracy frames recorded.");
+
+                    float targetScore = totalScoreFrames.Last().amount;
+                    var scorePctFrames = totalScoreFrames.Select(scoreFrame => scoreFrame.ToPercentFrame(targetScore)).ToList();
+
+                    endGameDisplay.Inject(LoggerInstance, lifePctFrames, scorePctFrames);
                 }
             }
         }
@@ -96,7 +106,7 @@ namespace PerformanceMeter
             }
         }
 
-        /* Handle events */
+        /* Handle websocket events */
 
         void ISynthRidersEventHandler.OnSongStart(EventDataSongStart data)
         {
@@ -121,6 +131,7 @@ namespace PerformanceMeter
             if (inSong)
             {
                 lifePctFrames.Add(new PercentFrame(data.playTimeMS, data.lifeBarPercent));
+                totalScoreFrames.Add(new CumulativeFrame(data.playTimeMS, data.score));
             }
         }
 
