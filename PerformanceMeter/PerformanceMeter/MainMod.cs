@@ -14,16 +14,12 @@ namespace PerformanceMeter
     public class MainMod : MelonMod, ISynthRidersEventHandler
     {
         private static string SCENE_NAME_GAME_END = "3.GameEnd";
-        private static int MARKER_PERIOD_MIN_MS = 1000;
-        private static int MARKER_PERIOD_MAX_MS = 5 * 60 * 1000;
-
-        public static MelonPreferences_Category prefs;
-        private static bool isEnabled = true;
-        private static bool showAverageLine = true;
-        private static int markerPeriodMs = 30000;
 
         private static MelonLogger.Instance _logger;
+        private static ConfigManager config;
+
         private static List<PercentFrame> lifePctFrames;
+        private static List<CumulativeFrame> totalScoreFrames;
         private static EndGameDisplay endGameDisplay;
         private static SynthRidersEventsManager websocketManager;
         
@@ -32,67 +28,23 @@ namespace PerformanceMeter
         public override void OnApplicationStart()
         {
             _logger = LoggerInstance;
+            
+            config = new ConfigManager();
+            config.Initialize(_logger);
 
-            SetupConfig();
-
-            if (!isEnabled)
+            if (!config.isEnabled)
             {
                 _logger.Msg("Disabled in config");
                 return;
             }
 
             lifePctFrames = new List<PercentFrame>();
-            endGameDisplay = new EndGameDisplay(showAverageLine, markerPeriodMs);
-
+            totalScoreFrames = new List<CumulativeFrame>();
+            endGameDisplay = new EndGameDisplay(config);
             websocketManager = new SynthRidersEventsManager(_logger, "ws://localhost:9000", this);
         }
 
-        private void SetupConfig()
-        {
-            prefs = MelonPreferences.CreateCategory("MainPreferences", "Preferences");
-
-            try
-            {
-                // Remove old empty config file from 1.0.0/1.1.0
-                File.Delete("UserData/PerformanceMeter.cfg");
-            }
-            catch (Exception e)
-            {
-                _logger.Msg("Failed to remove old config file: " + e.Message);
-            }
-
-            try
-            {
-                Directory.CreateDirectory("UserData/PerformanceMeter");
-
-                prefs.SetFilePath("UserData/PerformanceMeter/PerformanceMeter.cfg");
-
-                var isEnabledEntry = prefs.CreateEntry("isEnabled", true, "Enabled");
-                isEnabled = isEnabledEntry.Value;
-
-                var showAverageLineEntry = prefs.CreateEntry("showAverageLine", true, "Show Average Line");
-                showAverageLine = showAverageLineEntry.Value;
-
-                var markerPeriodMsEntry = prefs.CreateEntry("markerPeriodMs", 30000, "Marker Period (ms)");
-                markerPeriodMs = markerPeriodMsEntry.Value;
-                if (markerPeriodMs < MARKER_PERIOD_MIN_MS)
-                {
-                    _logger.Msg("markerPeroidMs is less than minimum; did you put in seconds instead of milliseconds? Using min of " + MARKER_PERIOD_MIN_MS);
-                    markerPeriodMs = MARKER_PERIOD_MIN_MS;
-                }
-                markerPeriodMs = Math.Min(MARKER_PERIOD_MAX_MS, markerPeriodMs);
-
-                _logger.Msg("Config Loaded");
-                _logger.Msg("  Enabled? " + isEnabled);
-                _logger.Msg("  Show average line? " + showAverageLine);
-                _logger.Msg("  markerPeriodMs: " + markerPeriodMs);
-            }
-            catch (Exception e)
-            {
-                _logger.Msg("Failed to setup config values. Msg: " + e.Message);
-            }
-        }
-
+        
         private void Reset()
         {
             lifePctFrames.Clear();
@@ -103,7 +55,7 @@ namespace PerformanceMeter
         {
             base.OnSceneWasLoaded(buildIndex, sceneName);
 
-            if (!isEnabled)
+            if (!config.isEnabled)
             {
                 return;
             }
@@ -131,7 +83,7 @@ namespace PerformanceMeter
         {
             base.OnApplicationQuit();
 
-            if (websocketManager != null && isEnabled)
+            if (websocketManager != null && config.isEnabled)
             {
                 try
                 {

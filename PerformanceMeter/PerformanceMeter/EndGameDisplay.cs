@@ -18,13 +18,11 @@ namespace PerformanceMeter
         private static Color colorMarker = new Color(0.6f, 0.6f, 0.6f, 0.8f);
         private static Color colorAverageLine = new Color(0.9f, 0.9f, 0.9f, 0.5f);
 
-        private bool showAverageLine;
-        private int markerPeriodMs;
+        private ConfigManager config;
 
-        public EndGameDisplay(bool showAverageLine, int markerPeriodMs)
+        public EndGameDisplay(ConfigManager config)
         {
-            this.showAverageLine = showAverageLine;
-            this.markerPeriodMs = markerPeriodMs;
+            this.config = config;
         }
 
         public void Inject(
@@ -191,13 +189,13 @@ namespace PerformanceMeter
             // Treat last recorded event as end of song (ignoring outros etc)
             float songDurationMs = percentFrames.Last().timeMs;
             logger.Msg("Duration: " + songDurationMs);
-            for (var markerMs = markerPeriodMs; markerMs < songDurationMs; markerMs += markerPeriodMs)
+            for (var markerMs = config.markerPeriodMs; markerMs < songDurationMs; markerMs += config.markerPeriodMs)
             {
                 float pctX = markerMs / songDurationMs;
                 CreateTimeMarker(graphableRect, pctX);
             }
 
-            if (showAverageLine)
+            if (config.showAverageLine)
             {
                 CreateAverageLine(graphableRect, averagePercent);
             }
