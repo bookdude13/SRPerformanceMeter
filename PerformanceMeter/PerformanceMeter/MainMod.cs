@@ -7,6 +7,8 @@ using System.Text;
 using System.Threading.Tasks;
 using MelonLoader;
 using PerformanceMeter.Frames;
+using PerformanceMeter.Repositories;
+using PerformanceMeter.Services;
 using SynthRidersWebsockets.Events;
 using UnityEngine;
 
@@ -15,9 +17,11 @@ namespace PerformanceMeter
     public class MainMod : MelonMod, ISynthRidersEventHandler
     {
         private static readonly string SCENE_NAME_GAME_END = "3.GameEnd";
+        private static readonly string modDirectory = "UserData/PerformanceMeter";
 
         private static MelonLogger.Instance _logger;
         private static ConfigManager config;
+        private static LocalScoreService localScoreService;
 
         private static List<PercentFrame> lifePctFrames;
         private static List<CumulativeFrame> totalScoreFrames;
@@ -31,7 +35,7 @@ namespace PerformanceMeter
         {
             _logger = LoggerInstance;
             
-            config = new ConfigManager();
+            config = new ConfigManager(modDirectory);
             config.Initialize(_logger);
 
             if (!config.isEnabled)
@@ -43,8 +47,29 @@ namespace PerformanceMeter
             lifePctFrames = new List<PercentFrame>();
             totalScoreFrames = new List<CumulativeFrame>();
             totalPerfectFrames = new List<CumulativeFrame>();
+
             endGameDisplay = new EndGameDisplay(config);
+
+            var wrappedLogger = new MelonLoggerWrapper(_logger);
+
+            try
+            {
+                _logger.Msg("Setting up database...");
+                var scoresDbPath = Path.Combine(modDirectory, "scores.db");
+                var scoresDb = new LiteDB.LiteDatabase(scoresDbPath);
+                var localScoreRepo = new LocalScoreRepository(wrappedLogger, scoresDb);
+                localScoreService = new LocalScoreService(wrappedLogger, localScoreRepo);
+            }
+            catch (Exception e)
+            {
+                _logger.Msg("Failed to set up database! Disabling to be safe. Message: " + e.Message);
+                config.isEnabled = false;
+            }
+
+            _logger.Msg("Setting up websocket manager...");
             websocketManager = new SynthRidersEventsManager(_logger, "ws://localhost:9000", this);
+
+            _logger.Msg("Initialized.");
         }
 
         
@@ -72,6 +97,7 @@ namespace PerformanceMeter
             if (sceneName == "0.AWarning")
             {
                 // Start websocket client after the server is likely started
+                _logger.Msg("Starting websocket client after startup...");
                 websocketManager.StartAsync();
             }
             else if (sceneName == SCENE_NAME_GAME_END)

@@ -24,7 +24,7 @@ namespace PerformanceMeter.Repositories
         {
             try
             {
-                var id = highScores.Insert(highScore);
+                var id = highScores.Upsert(highScore.Id, highScore);
                 //highScores.EnsureIndex(score => score.Id);
             }
             catch (Exception e)

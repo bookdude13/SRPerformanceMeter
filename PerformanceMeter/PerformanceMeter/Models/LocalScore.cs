@@ -16,6 +16,7 @@ namespace PerformanceMeter.Models
         public string Difficulty { get; set; }
         public string Modifiers { get; set; }
         public List<CumulativeFrame> TotalScoreFrames { get; set; }
+        public long EpochTimeSet { get; set; }
 
         public LocalScore()
         {
@@ -29,6 +30,7 @@ namespace PerformanceMeter.Models
             this.Difficulty = difficulty;
             this.Modifiers = modifiers;
             this.TotalScoreFrames = totalScoreFrames;
+            this.EpochTimeSet = DateTimeOffset.Now.ToUnixTimeSeconds();
         }
 
         public static string GetIdentifier(string username, string mapHash, string difficulty, string modifiers)

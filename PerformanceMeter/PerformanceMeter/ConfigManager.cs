@@ -13,10 +13,17 @@ namespace PerformanceMeter
         private static readonly int MARKER_PERIOD_MIN_MS = 1000;
         private static readonly int MARKER_PERIOD_MAX_MS = 5 * 60 * 1000;
 
+        private readonly string modDirectory;
+
         public MelonPreferences_Category prefs;
         public bool isEnabled = true;
         public bool showAverageLine = true;
         public int markerPeriodMs = 30000;
+
+        public ConfigManager(string modDirectory)
+        {
+            this.modDirectory = modDirectory;
+        }
 
         public void Initialize(MelonLogger.Instance logger)
         {
@@ -34,9 +41,10 @@ namespace PerformanceMeter
 
             try
             {
-                Directory.CreateDirectory("UserData/PerformanceMeter");
+                Directory.CreateDirectory(modDirectory);
 
-                prefs.SetFilePath("UserData/PerformanceMeter/PerformanceMeter.cfg");
+                var configPath = Path.Combine(modDirectory, "PerformanceMeter.cfg");
+                prefs.SetFilePath(configPath);
 
                 var isEnabledEntry = prefs.CreateEntry("isEnabled", true, "Enabled");
                 isEnabled = isEnabledEntry.Value;

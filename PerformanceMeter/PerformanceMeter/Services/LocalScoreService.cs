@@ -22,9 +22,22 @@ namespace PerformanceMeter.Services
 
         public void AddScore(string username, string mapHash, string difficulty, string modifiers, List<CumulativeFrame> totalScoreFrames)
         {
-            // TODO only set if higher score
-            var localHighScore = new LocalScore(username, mapHash, difficulty, modifiers, totalScoreFrames);
-            repo.SetLocalHighScore(localHighScore);
+            var newScore = new LocalScore(username, mapHash, difficulty, modifiers, totalScoreFrames);
+            var existingHighScore = repo.GetLocalHighScore(username, mapHash, difficulty, modifiers);
+            if (existingHighScore == null)
+            {
+                logger.Msg("Setting first high score for id " + newScore.Id);
+                repo.SetLocalHighScore(newScore);
+            }
+            else if (newScore.TotalScoreFrames.Last().Amount >= existingHighScore.TotalScoreFrames.Last().Amount)
+            {
+                logger.Msg("Setting new high score for id " + newScore.Id);
+                repo.SetLocalHighScore(newScore);
+            }
+            else
+            {
+                logger.Msg("Score for id " + newScore.Id + " is lower than existing high score");
+            }
         }
 
         /// <summary>
