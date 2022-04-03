@@ -20,7 +20,7 @@ namespace PerformanceMeterTests
         private readonly string mapHash = "asdf";
         private readonly string difficulty = "Master";
         private readonly string gameMode = "Force";
-        private readonly string[] modifiers = new string[] { };
+        private readonly List<string> modifiers = new List<string>();
 
         private ILiteDatabase db;
         private BestRunsRepository repo;

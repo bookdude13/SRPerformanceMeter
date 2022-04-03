@@ -14,6 +14,6 @@ namespace PerformanceMeter.Models
         public string MapHash { get; set; }
         public string Difficulty { get; set; }
         public string GameMode { get; set; }
-        public string[] Modifiers { get; set; }
+        public List<string> Modifiers { get; set; }
     }
 }

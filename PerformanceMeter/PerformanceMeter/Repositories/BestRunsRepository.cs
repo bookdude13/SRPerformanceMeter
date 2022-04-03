@@ -17,7 +17,7 @@ namespace PerformanceMeter.Repositories
         public BestRunsRepository(ILogger logger, ILiteDatabase db)
         {
             this.logger = logger;
-            this.bestRuns = db.GetCollection<BestRun>("BestRuns");
+            this.bestRuns = db.GetCollection<BestRun>("BestRun");
         }
 
         public void UpsertBestRun(BestRun bestRun)

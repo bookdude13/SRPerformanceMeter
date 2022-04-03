@@ -88,7 +88,9 @@
     <Compile Include="Models\BestTotalScore.cs" />
     <Compile Include="Models\PlayConfiguration.cs" />
     <Compile Include="Repositories\BestRunsRepository.cs" />
+    <Compile Include="Repositories\PlayConfigurationRepository.cs" />
     <Compile Include="Services\BestRunsService.cs" />
+    <Compile Include="Services\PlayConfigurationService.cs" />
     <Compile Include="UnityUtil.cs" />
     <Compile Include="MainMod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
