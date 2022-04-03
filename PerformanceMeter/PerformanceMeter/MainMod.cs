@@ -21,7 +21,7 @@ namespace PerformanceMeter
 
         private static MelonLogger.Instance _logger;
         private static ConfigManager config;
-        private static LocalScoreService localScoreService;
+        private static BestRunsService bestRunsService;
 
         private static List<PercentFrame> lifePctFrames;
         private static List<CumulativeFrame> totalScoreFrames;
@@ -55,10 +55,10 @@ namespace PerformanceMeter
             try
             {
                 _logger.Msg("Setting up database...");
-                var scoresDbPath = Path.Combine(modDirectory, "scores.db");
-                var scoresDb = new LiteDB.LiteDatabase(scoresDbPath);
-                var localScoreRepo = new LocalScoreRepository(wrappedLogger, scoresDb);
-                localScoreService = new LocalScoreService(wrappedLogger, localScoreRepo);
+                var dbPath = Path.Combine(modDirectory, "PerformanceMeter.db");
+                var db = new LiteDB.LiteDatabase(dbPath);
+                var bestRunsRepo = new BestRunsRepository(wrappedLogger, db);
+                bestRunsService = new BestRunsService(wrappedLogger, bestRunsRepo);
             }
             catch (Exception e)
             {

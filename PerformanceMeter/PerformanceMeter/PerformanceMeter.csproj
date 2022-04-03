@@ -83,9 +83,11 @@
     <Compile Include="Frames\PercentFrame.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="MelonLoggerWrapper.cs" />
-    <Compile Include="Models\LocalScore.cs" />
-    <Compile Include="Repositories\LocalScoreRepository.cs" />
-    <Compile Include="Services\LocalScoreService.cs" />
+    <Compile Include="Models\BestRun.cs" />
+    <Compile Include="Models\BestTotalScore.cs" />
+    <Compile Include="Models\PlayConfiguration.cs" />
+    <Compile Include="Repositories\BestRunsRepository.cs" />
+    <Compile Include="Services\BestRunsService.cs" />
     <Compile Include="UnityUtil.cs" />
     <Compile Include="MainMod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
