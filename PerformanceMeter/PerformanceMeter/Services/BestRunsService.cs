@@ -20,6 +20,12 @@ namespace PerformanceMeter.Services
             this.repo = repo;
         }
 
+        public BestTotalScore GetBestTotalScore(PlayConfiguration playConfiguration)
+        {
+            BestRun bestRun = repo.GetBestRun(playConfiguration.Id);
+            return bestRun?.TotalScore;
+        }
+
         public void UpdateBestTotalScore(PlayConfiguration playConfiguration, List<CumulativeFrame> totalScoreFrames)
         {
             // TODO distinguish between raw (no mod) and normal (with mod)
@@ -49,10 +55,37 @@ namespace PerformanceMeter.Services
             }
         }
 
-        public BestTotalScore GetBestTotalScore(PlayConfiguration playConfiguration)
+        public BestLifePercent GetBestLifePercent(PlayConfiguration playConfiguration)
         {
             BestRun bestRun = repo.GetBestRun(playConfiguration.Id);
-            return bestRun?.TotalScore;
+            return bestRun?.LifePercent;
+        }
+
+        public void UpdateBestLifePercent(PlayConfiguration playConfiguration, float averageLifePercent, List<PercentFrame> lifePercentFrames)
+        {
+            // TODO distinguish between raw (no mod) and normal (with mod)
+            BestLifePercent newEntry = new BestLifePercent(averageLifePercent, lifePercentFrames);
+
+            BestRun bestRun = repo.GetBestRun(playConfiguration.Id);
+            if (bestRun == null)
+            {
+                logger.Msg(string.Format("No best run found for {0}, creating", playConfiguration.Id));
+                repo.UpsertBestRun(new BestRun()
+                {
+                    PlayConfigurationId = playConfiguration.Id,
+                    LifePercent = newEntry
+                });
+            }
+            else if (newEntry.AverageLifePercent >= bestRun.LifePercent.AverageLifePercent)
+            {
+                logger.Msg("New best life percent average! Updating");
+                bestRun.LifePercent = newEntry;
+                repo.UpsertBestRun(bestRun);
+            }
+            else
+            {
+                logger.Msg("Less than best average life percent, ignoring");
+            }
         }
     }
 }

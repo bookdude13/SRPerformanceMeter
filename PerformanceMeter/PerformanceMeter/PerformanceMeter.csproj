@@ -83,6 +83,7 @@
     <Compile Include="Frames\PercentFrame.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="MelonLoggerWrapper.cs" />
+    <Compile Include="Models\BestLifePercent.cs" />
     <Compile Include="Models\BestRun.cs" />
     <Compile Include="Models\BestTotalScore.cs" />
     <Compile Include="Models\PlayConfiguration.cs" />
