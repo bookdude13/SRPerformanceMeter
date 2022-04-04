@@ -29,7 +29,8 @@ namespace PerformanceMeter
         public void Inject(
             MelonLogger.Instance logger,
             List<PercentFrame> lifePctFrames,
-            List<PercentFrame> scorePctFrames
+            List<CumulativeFrame> bestScoreFrames,
+            List<CumulativeFrame> currentScoreFrames
         ) {
             GameObject leftScreen = InjectLeftScreen(logger);
 
@@ -52,9 +53,15 @@ namespace PerformanceMeter
             // Life percent
             InjectLifePercentGraph(logger, parent, clonedStatTransform.gameObject, lifePctFrames);
 
-            // Total score
+            // Total score comparison
             RectTransform totalScoreGraphContainer = CreateGraphContainer(logger, parent, "pm_totalScoreContainer");
-            InjectPercentGraph(logger, totalScoreGraphContainer, scorePctFrames, pct => Color.white);
+
+            float topScore = bestScoreFrames.Last().Amount;
+            var currentScorePctFrames = currentScoreFrames.Select(cumFrame => cumFrame.ToPercentFrame(topScore)).ToList();
+            var bestScorePctFrames = bestScoreFrames.Select(cumFrame => cumFrame.ToPercentFrame(topScore)).ToList();
+
+            InjectPercentGraph(logger, totalScoreGraphContainer, bestScorePctFrames, pct => Color.white);
+            InjectPercentGraph(logger, totalScoreGraphContainer, currentScorePctFrames, pct => Color.yellow);
 
             clonedStatTransform.gameObject.SetActive(false);
         }

@@ -115,37 +115,28 @@ namespace PerformanceMeter
                 _logger.Msg(totalScoreFrames.Count + " score frames recorded.");
                 _logger.Msg(totalPerfectFrames.Count + " accuracy frames recorded.");
 
-                // Life percent
+                var averageLifePercent = Utils.CalculateAveragePercent(lifePctFrames);
+
+                // Database updates
+                LifePercentRun bestLifePercentRun = null;
+                TotalScoreRun bestTotalScoreRun = null;
                 try
                 {
-                    var averageLifePercent = Utils.CalculateAveragePercent(lifePctFrames);
                     bestRunService.UpdateBestLifePercent(currentPlayConfig, averageLifePercent, lifePctFrames);
-                    var bestLifePercentRun = bestRunService.GetBestLifePercent(currentPlayConfig);
-                    _logger.Msg("High life pct avg: " + bestLifePercentRun.AverageLifePercent);
-                }
-                catch (Exception e)
-                {
-                    _logger.Msg("Error while updating life pct: " + e.Message);
-                }
+                    bestLifePercentRun = bestRunService.GetBestLifePercent(currentPlayConfig);
 
-                // Total score comparison
-                List<PercentFrame> scorePctFrames = new List<PercentFrame>();
-                try
-                {
                     bestRunService.UpdateBestTotalScore(currentPlayConfig, totalScoreFrames);
-                    var bestTotalScoreRun = bestRunService.GetBestTotalScore(currentPlayConfig);
-                    float targetScore = bestTotalScoreRun.EndScore;
-                    _logger.Msg("High score: " + targetScore);
-                    scorePctFrames = totalScoreFrames.Select(scoreFrame => scoreFrame.ToPercentFrame(targetScore)).ToList();
+                    bestTotalScoreRun = bestRunService.GetBestTotalScore(currentPlayConfig);
                 }
                 catch (Exception e)
                 {
-                    _logger.Msg("Error while updating total score: " + e.Message);
+                    _logger.Msg("Error while updating best runs: " + e.Message);
+                    return;
                 }
 
-                if (lifePctFrames.Count > 0 && scorePctFrames.Count > 0)
+                if (lifePctFrames.Count > 0 && totalScoreFrames.Count > 0 && bestTotalScoreRun.TotalScoreFrames.Count > 0)
                 {
-                    endGameDisplay.Inject(LoggerInstance, lifePctFrames, scorePctFrames);
+                    endGameDisplay.Inject(LoggerInstance, lifePctFrames, bestTotalScoreRun.TotalScoreFrames, totalScoreFrames);
                 }
             }
         }
