@@ -5,10 +5,13 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using HarmonyLib;
 using MelonLoader;
 using PerformanceMeter.Frames;
+using PerformanceMeter.Models;
 using PerformanceMeter.Repositories;
 using PerformanceMeter.Services;
+using Synth.Data;
 using SynthRidersWebsockets.Events;
 using UnityEngine;
 
@@ -21,14 +24,15 @@ namespace PerformanceMeter
 
         private static MelonLogger.Instance _logger;
         private static ConfigManager config;
-        private static BestRunsService bestRunsService;
+        private static BestRunService bestRunService;
+        private static PlayConfigurationService playConfigurationService;
+        private static EndGameDisplay endGameDisplay;
+        private static SynthRidersEventsManager websocketManager;
 
         private static List<PercentFrame> lifePctFrames;
         private static List<CumulativeFrame> totalScoreFrames;
         private static List<CumulativeFrame> totalPerfectFrames;
-        private static EndGameDisplay endGameDisplay;
-        private static SynthRidersEventsManager websocketManager;
-        
+        private static PlayConfiguration currentPlayConfig;        
         private static bool inSong = false;
 
         public override void OnApplicationStart()
@@ -56,9 +60,14 @@ namespace PerformanceMeter
             {
                 _logger.Msg("Setting up database...");
                 var dbPath = Path.Combine(modDirectory, "PerformanceMeter.db");
-                var db = new LiteDB.LiteDatabase(dbPath);
-                var bestRunsRepo = new BestRunsRepository(wrappedLogger, db);
-                bestRunsService = new BestRunsService(wrappedLogger, bestRunsRepo);
+                var db = new LiteDB.LiteDatabase(string.Format("Filename={0}", dbPath));
+
+                _logger.Msg("Setting up repos....");
+                var playConfigurationRepo = new PlayConfigurationRepository(wrappedLogger, db);
+                playConfigurationService = new PlayConfigurationService(wrappedLogger, playConfigurationRepo);
+
+                var bestRunRepo = new BestRunRepository(wrappedLogger, db);
+                bestRunService = new BestRunService(wrappedLogger, bestRunRepo);
             }
             catch (Exception e)
             {
@@ -102,15 +111,40 @@ namespace PerformanceMeter
             }
             else if (sceneName == SCENE_NAME_GAME_END)
             {
-                if (lifePctFrames.Count > 0)
+                _logger.Msg(lifePctFrames.Count + " life pct frames recorded.");
+                _logger.Msg(totalScoreFrames.Count + " score frames recorded.");
+                _logger.Msg(totalPerfectFrames.Count + " accuracy frames recorded.");
+
+                // Life percent
+                try
                 {
-                    _logger.Msg(lifePctFrames.Count + " life pct frames recorded.");
-                    _logger.Msg(totalScoreFrames.Count + " score frames recorded.");
-                    _logger.Msg(totalPerfectFrames.Count + " accuracy frames recorded.");
+                    var averageLifePercent = Utils.CalculateAveragePercent(lifePctFrames);
+                    bestRunService.UpdateBestLifePercent(currentPlayConfig, averageLifePercent, lifePctFrames);
+                    var bestLifePercentRun = bestRunService.GetBestLifePercent(currentPlayConfig);
+                    _logger.Msg("High life pct avg: " + bestLifePercentRun.AverageLifePercent);
+                }
+                catch (Exception e)
+                {
+                    _logger.Msg("Error while updating life pct: " + e.Message);
+                }
 
-                    float targetScore = totalScoreFrames.Last().Amount;
-                    var scorePctFrames = totalScoreFrames.Select(scoreFrame => scoreFrame.ToPercentFrame(targetScore)).ToList();
+                // Total score comparison
+                List<PercentFrame> scorePctFrames = new List<PercentFrame>();
+                try
+                {
+                    bestRunService.UpdateBestTotalScore(currentPlayConfig, totalScoreFrames);
+                    var bestTotalScoreRun = bestRunService.GetBestTotalScore(currentPlayConfig);
+                    float targetScore = bestTotalScoreRun.EndScore;
+                    _logger.Msg("High score: " + targetScore);
+                    scorePctFrames = totalScoreFrames.Select(scoreFrame => scoreFrame.ToPercentFrame(targetScore)).ToList();
+                }
+                catch (Exception e)
+                {
+                    _logger.Msg("Error while updating total score: " + e.Message);
+                }
 
+                if (lifePctFrames.Count > 0 && scorePctFrames.Count > 0)
+                {
                     endGameDisplay.Inject(LoggerInstance, lifePctFrames, scorePctFrames);
                 }
             }
@@ -133,6 +167,47 @@ namespace PerformanceMeter
             }
         }
 
+        private PlayConfiguration GetCurrentPlayConfiguration(GameControlManager gameControlManager, Game_InfoProvider infoProvider)
+        {
+            if (gameControlManager == null || infoProvider == null)
+            {
+                return null;
+            }
+
+            // Pieces taken from Game_InfoProvider.DoScoresUpload() and Util_LeaderboardManager.SubmitMatchScoresGlobal()
+
+            string username = Util_PlatformManager.MyUserName;
+            string difficulty = Game_InfoProvider.CurrentDifficultyS.ToString();
+            
+            LeaderboardInfo.PlayMode gameMode = LeaderboardInfo.PlayMode.Rhythm;
+            if (Game_InfoProvider.ModifiersMode == SynthSettings.ModifiersMode.Boxing || Game_InfoProvider.ModifiersMode == SynthSettings.ModifiersMode.BoxingNormal)
+            {
+                gameMode = LeaderboardInfo.PlayMode.Force;
+            }
+
+            string mapHash = infoProvider.LeaderboardName;
+            if (!string.IsNullOrEmpty(infoProvider.LeaderboardHash))
+            {
+                mapHash = infoProvider.LeaderboardHash;
+            }
+
+            var modifiers = new List<string>();
+            List<LeaderboardModifier> leaderboardModifiers = infoProvider.GetCurrentModifiersListSelected(false);
+            foreach (var modif in leaderboardModifiers)
+            {
+                modifiers.Add(modif.ToString());
+            }
+
+            return new PlayConfiguration()
+            {
+                Username = username,
+                Difficulty = difficulty,
+                MapHash = mapHash,
+                GameMode = gameMode.ToString(),
+                Modifiers = modifiers
+            };
+        }
+
         /* Handle websocket events */
 
         void ISynthRidersEventHandler.OnSongStart(EventDataSongStart data)
@@ -140,12 +215,16 @@ namespace PerformanceMeter
             _logger.Msg("Song started!");
             Reset();
             inSong = true;
+            currentPlayConfig = GetCurrentPlayConfiguration(GameControlManager.s_instance, Game_InfoProvider.s_instance);
         }
 
         void ISynthRidersEventHandler.OnSongEnd(EventDataSongEnd data)
         {
             _logger.Msg("Song ended!");
             inSong = false;
+
+            // Once we don't risk introducing any lag into the run, ensure that the play config exists while wrapping up the map
+            currentPlayConfig.Id = playConfigurationService.EnsurePlayConfiguration(currentPlayConfig) ?? Guid.NewGuid();
         }
 
         void ISynthRidersEventHandler.OnPlayTime(EventDataPlayTime data)

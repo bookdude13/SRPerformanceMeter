@@ -9,12 +9,12 @@ using System.Threading.Tasks;
 
 namespace PerformanceMeter.Repositories
 {
-    public class BestRunsRepository
+    public class BestRunRepository
     {
         private readonly ILogger logger;
         private readonly ILiteCollection<BestRun> bestRuns;
 
-        public BestRunsRepository(ILogger logger, ILiteDatabase db)
+        public BestRunRepository(ILogger logger, ILiteDatabase db)
         {
             this.logger = logger;
             this.bestRuns = db.GetCollection<BestRun>("BestRun");

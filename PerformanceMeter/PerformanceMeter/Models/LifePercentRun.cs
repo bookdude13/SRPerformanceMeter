@@ -7,17 +7,17 @@ using System.Threading.Tasks;
 
 namespace PerformanceMeter.Models
 {
-    public class BestLifePercent
+    public class LifePercentRun
     {
         public long EpochTimeSet { get; set; }
         public float AverageLifePercent { get; set; }
         public List<PercentFrame> LifePercentFrames { get; set; }
 
-        public BestLifePercent()
+        public LifePercentRun()
         {
         }
 
-        public BestLifePercent(float averageLifePercent, List<PercentFrame> lifePercentFrames)
+        public LifePercentRun(float averageLifePercent, List<PercentFrame> lifePercentFrames)
         {
             this.EpochTimeSet = DateTimeOffset.Now.ToUnixTimeSeconds();
             this.AverageLifePercent = averageLifePercent;

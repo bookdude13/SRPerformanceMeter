@@ -9,18 +9,18 @@ using System.Threading.Tasks;
 
 namespace PerformanceMeter.Services
 {
-    public class BestRunsService
+    public class BestRunService
     {
         private readonly ILogger logger;
-        private readonly BestRunsRepository repo;
+        private readonly BestRunRepository repo;
 
-        public BestRunsService(ILogger logger, BestRunsRepository repo)
+        public BestRunService(ILogger logger, BestRunRepository repo)
         {
             this.logger = logger;
             this.repo = repo;
         }
 
-        public BestTotalScore GetBestTotalScore(PlayConfiguration playConfiguration)
+        public TotalScoreRun GetBestTotalScore(PlayConfiguration playConfiguration)
         {
             BestRun bestRun = repo.GetBestRun(playConfiguration.Id);
             return bestRun?.TotalScore;
@@ -31,7 +31,7 @@ namespace PerformanceMeter.Services
             // TODO distinguish between raw (no mod) and normal (with mod)
             float endScoreRaw = totalScoreFrames.Last().Amount;
             float endScore = totalScoreFrames.Last().Amount;
-            BestTotalScore newScore = new BestTotalScore(endScoreRaw, endScore, totalScoreFrames);
+            TotalScoreRun newScore = new TotalScoreRun(endScoreRaw, endScore, totalScoreFrames);
 
             BestRun bestRun = repo.GetBestRun(playConfiguration.Id);
             if (bestRun == null)
@@ -43,7 +43,7 @@ namespace PerformanceMeter.Services
                     TotalScore = newScore
                 });
             }
-            else if (newScore.EndScore >= bestRun.TotalScore.EndScore)
+            else if (newScore.EndScore >= (bestRun?.TotalScore?.EndScore ?? 0))
             {
                 logger.Msg("New high score! Updating");
                 bestRun.TotalScore = newScore;
@@ -55,7 +55,7 @@ namespace PerformanceMeter.Services
             }
         }
 
-        public BestLifePercent GetBestLifePercent(PlayConfiguration playConfiguration)
+        public LifePercentRun GetBestLifePercent(PlayConfiguration playConfiguration)
         {
             BestRun bestRun = repo.GetBestRun(playConfiguration.Id);
             return bestRun?.LifePercent;
@@ -64,7 +64,7 @@ namespace PerformanceMeter.Services
         public void UpdateBestLifePercent(PlayConfiguration playConfiguration, float averageLifePercent, List<PercentFrame> lifePercentFrames)
         {
             // TODO distinguish between raw (no mod) and normal (with mod)
-            BestLifePercent newEntry = new BestLifePercent(averageLifePercent, lifePercentFrames);
+            LifePercentRun newEntry = new LifePercentRun(averageLifePercent, lifePercentFrames);
 
             BestRun bestRun = repo.GetBestRun(playConfiguration.Id);
             if (bestRun == null)
@@ -76,7 +76,7 @@ namespace PerformanceMeter.Services
                     LifePercent = newEntry
                 });
             }
-            else if (newEntry.AverageLifePercent >= bestRun.LifePercent.AverageLifePercent)
+            else if (newEntry.AverageLifePercent >= (bestRun?.LifePercent?.AverageLifePercent ?? 0))
             {
                 logger.Msg("New best life percent average! Updating");
                 bestRun.LifePercent = newEntry;

@@ -19,6 +19,35 @@ namespace PerformanceMeter.Services
             this.repo = repo;
         }
 
+        public Guid? EnsurePlayConfiguration(PlayConfiguration playConfiguration)
+        {
+            try
+            {
+                var configuration = repo.GetPlayConfiguration(
+                    playConfiguration.Username,
+                    playConfiguration.MapHash,
+                    playConfiguration.Difficulty,
+                    playConfiguration.GameMode,
+                    playConfiguration.Modifiers
+                );
+                if (configuration == null)
+                {
+                    logger.Msg("Play config missing; adding...");
+                    playConfiguration.Id = Guid.NewGuid();
+                    return repo.AddPlayConfiguration(playConfiguration);
+                }
+                else
+                {
+                    return configuration.Id;
+                }
+            }
+            catch (Exception e)
+            {
+                logger.Msg("Failed to ensure play config " + playConfiguration.Id + ": " + e.Message);
+                return null;
+            }
+        }
+
         /// <summary>
         /// Get the PlayConfiguration for this combined key, creating if it doesn't exist.
         /// </summary>

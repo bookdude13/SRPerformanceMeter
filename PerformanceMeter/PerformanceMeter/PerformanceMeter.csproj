@@ -43,6 +43,10 @@
     <Reference Include="MelonLoader">
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\SynthRiders\MelonLoader\MelonLoader.dll</HintPath>
     </Reference>
+    <Reference Include="PhotonUnityNetworking, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\SynthRiders\SynthRiders_Data\Managed\PhotonUnityNetworking.dll</HintPath>
+    </Reference>
     <Reference Include="SynthRidersWebsockets, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>libs\SynthRidersWebsockets.dll</HintPath>
@@ -83,13 +87,13 @@
     <Compile Include="Frames\PercentFrame.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="MelonLoggerWrapper.cs" />
-    <Compile Include="Models\BestLifePercent.cs" />
+    <Compile Include="Models\LifePercentRun.cs" />
     <Compile Include="Models\BestRun.cs" />
-    <Compile Include="Models\BestTotalScore.cs" />
+    <Compile Include="Models\TotalScoreRun.cs" />
     <Compile Include="Models\PlayConfiguration.cs" />
-    <Compile Include="Repositories\BestRunsRepository.cs" />
+    <Compile Include="Repositories\BestRunRepository.cs" />
     <Compile Include="Repositories\PlayConfigurationRepository.cs" />
-    <Compile Include="Services\BestRunsService.cs" />
+    <Compile Include="Services\BestRunService.cs" />
     <Compile Include="Services\PlayConfigurationService.cs" />
     <Compile Include="UnityUtil.cs" />
     <Compile Include="MainMod.cs" />

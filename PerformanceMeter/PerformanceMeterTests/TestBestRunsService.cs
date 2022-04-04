@@ -23,8 +23,8 @@ namespace PerformanceMeterTests
         private readonly List<string> modifiers = new List<string>();
 
         private ILiteDatabase db;
-        private BestRunsRepository repo;
-        private BestRunsService service;
+        private BestRunRepository repo;
+        private BestRunService service;
         private PlayConfiguration playConfiguration;
 
         [TestInitialize]
@@ -32,8 +32,8 @@ namespace PerformanceMeterTests
         {
             db = new LiteDatabase(":memory:");
             var logger = new LoggerForTest();
-            repo = new BestRunsRepository(logger, db);
-            service = new BestRunsService(logger, repo);
+            repo = new BestRunRepository(logger, db);
+            service = new BestRunService(logger, repo);
             playConfiguration = new PlayConfiguration()
             {
                 Id = Guid.NewGuid(),
@@ -69,7 +69,7 @@ namespace PerformanceMeterTests
         [TestMethod]
         public void TestGetBestTotalScore_NoExisting_ReturnsNull()
         {
-            BestTotalScore highScore = service.GetBestTotalScore(playConfiguration);
+            TotalScoreRun highScore = service.GetBestTotalScore(playConfiguration);
             Assert.IsNull(highScore);
         }
 
@@ -80,7 +80,7 @@ namespace PerformanceMeterTests
             service.UpdateBestTotalScore(playConfiguration, frames);
 
             // Should be set
-            BestTotalScore bestTotalScore = service.GetBestTotalScore(playConfiguration);
+            TotalScoreRun bestTotalScore = service.GetBestTotalScore(playConfiguration);
             Assert.IsNotNull(bestTotalScore);
             Assert.AreEqual(frames.Last().Amount, bestTotalScore.EndScore);
             Assert.AreEqual(frames.Count, bestTotalScore.TotalScoreFrames.Count);
@@ -99,7 +99,7 @@ namespace PerformanceMeterTests
             lowerScoreFrames.Add(new CumulativeFrame(999f, 88000.0f));
             service.UpdateBestTotalScore(playConfiguration, lowerScoreFrames);
 
-            BestTotalScore highScore = service.GetBestTotalScore(playConfiguration);
+            TotalScoreRun highScore = service.GetBestTotalScore(playConfiguration);
             Assert.IsNotNull(highScore);
             Assert.AreEqual(99000.0f, highScore.EndScore);
 
@@ -116,7 +116,7 @@ namespace PerformanceMeterTests
         [TestMethod]
         public void TestGetBestLifePercent_NoExisting_ReturnsNull()
         {
-            BestLifePercent bestLifePercent = service.GetBestLifePercent(playConfiguration);
+            LifePercentRun bestLifePercent = service.GetBestLifePercent(playConfiguration);
             Assert.IsNull(bestLifePercent);
         }
 
@@ -128,7 +128,7 @@ namespace PerformanceMeterTests
             service.UpdateBestLifePercent(playConfiguration, averageLifePercent, frames);
 
             // Should be set
-            BestLifePercent best = service.GetBestLifePercent(playConfiguration);
+            LifePercentRun best = service.GetBestLifePercent(playConfiguration);
             Assert.IsNotNull(best);
             Assert.AreEqual(0.8f, best.AverageLifePercent, 0.00001);
             Assert.AreEqual(frames.Count, best.LifePercentFrames.Count);
@@ -146,13 +146,13 @@ namespace PerformanceMeterTests
             // Same details, but smaller - not updated
             service.UpdateBestLifePercent(playConfiguration, initialLifePercent - 0.01f, frames);
 
-            BestLifePercent best = service.GetBestLifePercent(playConfiguration);
+            LifePercentRun best = service.GetBestLifePercent(playConfiguration);
             Assert.IsNotNull(best);
             Assert.AreEqual(0.9f, best.AverageLifePercent);
 
             // Same details, but higher - updated
             service.UpdateBestLifePercent(playConfiguration, initialLifePercent + 0.01f, frames);
-            BestLifePercent newBest = service.GetBestLifePercent(playConfiguration);
+            LifePercentRun newBest = service.GetBestLifePercent(playConfiguration);
             Assert.IsNotNull(best);
             Assert.AreEqual(0.9f, best.AverageLifePercent);
         }

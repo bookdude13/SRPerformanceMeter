@@ -34,6 +34,22 @@ namespace PerformanceMeterTests
         }
 
         [TestMethod]
+        public void TestEnsure_NoExisting_Creates()
+        {
+            service.EnsurePlayConfiguration(new PlayConfiguration()
+            {
+                Username = username,
+                MapHash = mapHash,
+                Difficulty = difficulty,
+                GameMode = gameMode,
+                Modifiers = modifiers
+            });
+
+            var config = service.GetPlayConfiguration(username, mapHash, difficulty, gameMode, modifiers);
+            Assert.IsNotNull(config);
+        }
+
+        [TestMethod]
         public void TestGet_NoExisting_CreatesAndReturns()
         {
             PlayConfiguration config = service.GetPlayConfiguration(username, mapHash, difficulty, gameMode, modifiers);

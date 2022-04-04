@@ -233,7 +233,6 @@ namespace PerformanceMeter
             // Time markers
             // Treat last recorded event as end of song (ignoring outros etc)
             float songDurationMs = percentFrames.Last().TimeMs;
-            logger.Msg("Duration: " + songDurationMs);
             for (var markerMs = config.markerPeriodMs; markerMs < songDurationMs; markerMs += config.markerPeriodMs)
             {
                 float pctX = markerMs / songDurationMs;

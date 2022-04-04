@@ -19,27 +19,15 @@ namespace PerformanceMeter.Repositories
             this.playConfigurations = db.GetCollection<PlayConfiguration>("PlayConfiguration");
         }
 
-        /*        public void UpsertPlayConfiguration(BestRun bestRun)
-                {
-                    try
-                    {
-                        var id = bestRuns.Upsert(bestRun.PlayConfigurationId, bestRun);
-                    }
-                    catch (Exception e)
-                    {
-                        logger.Msg("Failed to upsert best run with play configuration " + bestRun.PlayConfigurationId + ": " + e.Message);
-                    }
-                }
-        */
-
-        public void AddPlayConfiguration(PlayConfiguration playConfiguration) {
+        public Guid? AddPlayConfiguration(PlayConfiguration playConfiguration) {
             try
             {
-                playConfigurations.Insert(playConfiguration);
+                return playConfigurations.Insert(playConfiguration);
             }
             catch (Exception e)
             {
                 logger.Msg("Failed to add play configuration: " + e.Message);
+                return null;
             }
         }
 

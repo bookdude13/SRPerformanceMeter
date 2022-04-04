@@ -11,7 +11,7 @@ namespace PerformanceMeter.Models
     {
         [BsonId]
         public Guid PlayConfigurationId { get; set; }
-        public BestTotalScore TotalScore { get; set; }
-        public BestLifePercent LifePercent { get; set; }
+        public TotalScoreRun TotalScore { get; set; }
+        public LifePercentRun LifePercent { get; set; }
     }
 }
