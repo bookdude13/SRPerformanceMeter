@@ -26,6 +26,13 @@ namespace PerformanceMeter
             this.config = config;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="logger"></param>
+        /// <param name="lifePctFrames"></param>
+        /// <param name="bestScoreFrames">If the same as current score, show last high score</param>
+        /// <param name="currentScoreFrames"></param>
         public void Inject(
             MelonLogger.Instance logger,
             List<PercentFrame> lifePctFrames,
@@ -56,7 +63,7 @@ namespace PerformanceMeter
             // Total score comparison
             RectTransform totalScoreGraphContainer = CreateGraphContainer(logger, parent, "pm_totalScoreContainer");
 
-            float topScore = bestScoreFrames.Last().Amount;
+            float topScore = Math.Max(bestScoreFrames.Last().Amount, currentScoreFrames.Last().Amount);
             var currentScorePctFrames = currentScoreFrames.Select(cumFrame => cumFrame.ToPercentFrame(topScore)).ToList();
             var bestScorePctFrames = bestScoreFrames.Select(cumFrame => cumFrame.ToPercentFrame(topScore)).ToList();
 

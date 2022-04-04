@@ -119,14 +119,21 @@ namespace PerformanceMeter
 
                 // Database updates
                 LifePercentRun bestLifePercentRun = null;
-                TotalScoreRun bestTotalScoreRun = null;
+                TotalScoreRun highScoreRun = null;
                 try
                 {
                     bestRunService.UpdateBestLifePercent(currentPlayConfig, averageLifePercent, lifePctFrames);
                     bestLifePercentRun = bestRunService.GetBestLifePercent(currentPlayConfig);
 
+                    // Get high score run before updating, so we can compare if we beat it
+                    highScoreRun = bestRunService.GetBestTotalScore(currentPlayConfig);
                     bestRunService.UpdateBestTotalScore(currentPlayConfig, totalScoreFrames);
-                    bestTotalScoreRun = bestRunService.GetBestTotalScore(currentPlayConfig);
+
+                    // If we didn't have a high score run set yet (first score), then show both the same
+                    if (highScoreRun == null)
+                    {
+                        highScoreRun = bestRunService.GetBestTotalScore(currentPlayConfig);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -134,9 +141,10 @@ namespace PerformanceMeter
                     return;
                 }
 
-                if (lifePctFrames.Count > 0 && totalScoreFrames.Count > 0 && bestTotalScoreRun.TotalScoreFrames.Count > 0)
+                if (lifePctFrames.Count > 0 && totalScoreFrames.Count > 0 && highScoreRun != null)
                 {
-                    endGameDisplay.Inject(LoggerInstance, lifePctFrames, bestTotalScoreRun.TotalScoreFrames, totalScoreFrames);
+                    // Show last high score if we just beat it
+                    endGameDisplay.Inject(LoggerInstance, lifePctFrames, highScoreRun.TotalScoreFrames, totalScoreFrames);
                 }
             }
         }
