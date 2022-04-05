@@ -1,111 +1,260 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using HarmonyLib;
 using MelonLoader;
+using PerformanceMeter.Frames;
+using PerformanceMeter.Models;
+using PerformanceMeter.Repositories;
+using PerformanceMeter.Services;
+using Synth.Data;
+using SynthRidersWebsockets.Events;
 using UnityEngine;
 
 namespace PerformanceMeter
 {
-    public class MainMod : MelonMod
+    public class MainMod : MelonMod, ISynthRidersEventHandler
     {
-        private static string SCENE_NAME_GAME_END = "3.GameEnd";
-        private static int LIFE_CHECK_FREQUENCY_MS = 100;
-
-        public static MelonPreferences_Category prefs;
+        private static readonly string SCENE_NAME_GAME_END = "3.GameEnd";
+        private static readonly string modDirectory = "UserData/PerformanceMeter";
 
         private static MelonLogger.Instance _logger;
-        private static Dictionary<int, float> lifePctFrames;
+        private static ConfigManager config;
+        private static BestRunService bestRunService;
+        private static PlayConfigurationService playConfigurationService;
         private static EndGameDisplay endGameDisplay;
-        private static bool checkingLife = false;
-        private static int timeSinceLastCheckMs = 0;
-        private static int accumulatedTimeMs = 0;
+        private static SynthRidersEventsManager websocketManager;
+
+        private static List<PercentFrame> lifePctFrames;
+        private static List<CumulativeFrame> totalScoreFrames;
+        private static List<CumulativeFrame> totalPerfectFrames;
+        private static PlayConfiguration currentPlayConfig;        
+        private static bool inSong = false;
 
         public override void OnApplicationStart()
         {
-            prefs = MelonPreferences.CreateCategory("MainPreferences", "Preferences");
-            prefs.SetFilePath("UserData/PerformanceMeter.cfg");
-
             _logger = LoggerInstance;
-            lifePctFrames = new Dictionary<int, float>();
-            endGameDisplay = new EndGameDisplay();
-        }
+            
+            config = new ConfigManager(modDirectory);
+            config.Initialize(_logger);
 
-        private void Reset()
-        {
-            checkingLife = false;
-            timeSinceLastCheckMs = 0;
-            accumulatedTimeMs = 0;
-            lifePctFrames.Clear();
-            lifePctFrames.Add(0, 1.0f);
-        }
-
-        private bool IsSceneStage(string sceneName)
-        {
-            if (sceneName == null || !sceneName.Contains("."))
+            if (!config.isEnabled)
             {
-                return false;
+                _logger.Msg("Disabled in config");
+                return;
             }
 
-            string subName = sceneName.Split('.')[1];
-            bool isNormalStage = subName.StartsWith("Stage");
-            bool isSpinStage = subName.StartsWith("Static Stage");
-            bool isSpiralStage = subName.StartsWith("Spiral Stage");
+            lifePctFrames = new List<PercentFrame>();
+            totalScoreFrames = new List<CumulativeFrame>();
+            totalPerfectFrames = new List<CumulativeFrame>();
 
-            return isNormalStage || isSpinStage || isSpiralStage;
+            endGameDisplay = new EndGameDisplay(config);
+
+            var wrappedLogger = new MelonLoggerWrapper(_logger);
+
+            try
+            {
+                _logger.Msg("Setting up database...");
+                var dbPath = Path.Combine(modDirectory, "PerformanceMeter.db");
+                var db = new LiteDB.LiteDatabase(string.Format("Filename={0}", dbPath));
+
+                _logger.Msg("Setting up repos....");
+                var playConfigurationRepo = new PlayConfigurationRepository(wrappedLogger, db);
+                playConfigurationService = new PlayConfigurationService(wrappedLogger, playConfigurationRepo);
+
+                var bestRunRepo = new BestRunRepository(wrappedLogger, db);
+                bestRunService = new BestRunService(wrappedLogger, bestRunRepo);
+            }
+            catch (Exception e)
+            {
+                _logger.Msg("Failed to set up database! Disabling to be safe. Message: " + e.Message);
+                config.isEnabled = false;
+            }
+
+            _logger.Msg("Setting up websocket manager...");
+            websocketManager = new SynthRidersEventsManager(_logger, "ws://localhost:9000", this);
+
+            _logger.Msg("Initialized.");
+        }
+
+        
+        private void Reset()
+        {
+            lifePctFrames.Clear();
+            lifePctFrames.Add(new PercentFrame(0, 1.0f));
+
+            totalScoreFrames.Clear();
+            totalScoreFrames.Add(new CumulativeFrame(0, 0));
+
+            totalPerfectFrames.Clear();
+            totalPerfectFrames.Add(new CumulativeFrame(0, 0));
         }
 
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)
         {
             base.OnSceneWasLoaded(buildIndex, sceneName);
 
-            LoggerInstance.Msg("Scene loaded: " + sceneName);
-
-            if (IsSceneStage(sceneName))
+            if (!config.isEnabled)
             {
-                LoggerInstance.Msg("Starting to track life");
-                Reset();
-                checkingLife = true;
+                return;
+            }
+
+            if (sceneName == "0.AWarning")
+            {
+                // Start websocket client after the server is likely started
+                _logger.Msg("Starting websocket client after startup...");
+                websocketManager.StartAsync();
             }
             else if (sceneName == SCENE_NAME_GAME_END)
             {
-                if (lifePctFrames.Count <= 0)
+                _logger.Msg(lifePctFrames.Count + " life pct frames recorded.");
+                _logger.Msg(totalScoreFrames.Count + " score frames recorded.");
+                _logger.Msg(totalPerfectFrames.Count + " accuracy frames recorded.");
+
+                var averageLifePercent = Utils.CalculateAveragePercent(lifePctFrames);
+
+                // Database updates
+                LifePercentRun bestLifePercentRun = null;
+                TotalScoreRun highScoreRun = null;
+                try
                 {
-                    LoggerInstance.Msg("lifePctFrames empty, ignoring");
+                    bestRunService.UpdateBestLifePercent(currentPlayConfig, averageLifePercent, lifePctFrames);
+                    bestLifePercentRun = bestRunService.GetBestLifePercent(currentPlayConfig);
+
+                    // Get high score run before updating, so we can compare if we beat it
+                    highScoreRun = bestRunService.GetBestTotalScore(currentPlayConfig);
+                    bestRunService.UpdateBestTotalScore(currentPlayConfig, totalScoreFrames);
+
+                    // If we didn't have a high score run set yet (first score), then show both the same
+                    if (highScoreRun == null)
+                    {
+                        highScoreRun = bestRunService.GetBestTotalScore(currentPlayConfig);
+                    }
                 }
-                else
+                catch (Exception e)
                 {
-                    LoggerInstance.Msg(lifePctFrames.Count + " frames recorded.");
-                    endGameDisplay.Inject(LoggerInstance, lifePctFrames);
+                    _logger.Msg("Error while updating best runs: " + e.Message);
+                    return;
+                }
+
+                if (lifePctFrames.Count > 0 && totalScoreFrames.Count > 0 && highScoreRun != null)
+                {
+                    endGameDisplay.Inject(LoggerInstance, lifePctFrames, highScoreRun.TotalScoreFrames, totalScoreFrames);
                 }
             }
         }
 
-        public override void OnUpdate()
+        public override void OnApplicationQuit()
         {
-            if (!checkingLife) return;
-            if (GameControlManager.IsOnGameOver)
-            {
-                checkingLife = false;
-                return;
-            }
-            if (!GameControlManager.ImPlaying()) return;
+            base.OnApplicationQuit();
 
-            int deltaMs = (int)(Time.deltaTime * 1000);
-            accumulatedTimeMs += deltaMs;
-            timeSinceLastCheckMs += deltaMs;
-            if (timeSinceLastCheckMs > LIFE_CHECK_FREQUENCY_MS)
+            if (websocketManager != null && config.isEnabled)
             {
-                float lifePct = Synth.Utils.LifeBarHelper.GetScalePercent(0);
-                lifePctFrames.Add(accumulatedTimeMs, lifePct);
-                timeSinceLastCheckMs = 0;
+                try
+                {
+                    websocketManager.Shutdown();
+                }
+                catch (Exception e)
+                {
+                    _logger.Msg("Failed to shutdown websocket manager: " + e.ToString());
+                }
             }
         }
-        public static void Log(string message)
+
+        private PlayConfiguration GetCurrentPlayConfiguration(GameControlManager gameControlManager, Game_InfoProvider infoProvider)
         {
-            _logger.Msg(message);
+            if (gameControlManager == null || infoProvider == null)
+            {
+                return null;
+            }
+
+            // Pieces taken from Game_InfoProvider.DoScoresUpload() and Util_LeaderboardManager.SubmitMatchScoresGlobal()
+
+            string username = Util_PlatformManager.MyUserName;
+            string difficulty = Game_InfoProvider.CurrentDifficultyS.ToString();
+            
+            LeaderboardInfo.PlayMode gameMode = LeaderboardInfo.PlayMode.Rhythm;
+            if (Game_InfoProvider.ModifiersMode == SynthSettings.ModifiersMode.Boxing || Game_InfoProvider.ModifiersMode == SynthSettings.ModifiersMode.BoxingNormal)
+            {
+                gameMode = LeaderboardInfo.PlayMode.Force;
+            }
+
+            string mapHash = infoProvider.LeaderboardName;
+            if (!string.IsNullOrEmpty(infoProvider.LeaderboardHash))
+            {
+                mapHash = infoProvider.LeaderboardHash;
+            }
+
+            var modifiers = new List<string>();
+            List<LeaderboardModifier> leaderboardModifiers = infoProvider.GetCurrentModifiersListSelected(false);
+            foreach (var modif in leaderboardModifiers)
+            {
+                modifiers.Add(modif.ToString());
+            }
+
+            return new PlayConfiguration()
+            {
+                Username = username,
+                Difficulty = difficulty,
+                MapHash = mapHash,
+                GameMode = gameMode.ToString(),
+                Modifiers = modifiers
+            };
+        }
+
+        /* Handle websocket events */
+
+        void ISynthRidersEventHandler.OnSongStart(EventDataSongStart data)
+        {
+            _logger.Msg("Song started!");
+            Reset();
+            inSong = true;
+            currentPlayConfig = GetCurrentPlayConfiguration(GameControlManager.s_instance, Game_InfoProvider.s_instance);
+        }
+
+        void ISynthRidersEventHandler.OnSongEnd(EventDataSongEnd data)
+        {
+            _logger.Msg("Song ended!");
+            inSong = false;
+
+            // Once we don't risk introducing any lag into the run, ensure that the play config exists while wrapping up the map
+            currentPlayConfig.Id = playConfigurationService.EnsurePlayConfiguration(currentPlayConfig) ?? Guid.NewGuid();
+        }
+
+        void ISynthRidersEventHandler.OnPlayTime(EventDataPlayTime data)
+        {
+            _logger.Msg("Play time " + data.playTimeMS);
+        }
+
+        void ISynthRidersEventHandler.OnNoteHit(EventDataNoteHit data)
+        {
+            if (inSong)
+            {
+                lifePctFrames.Add(new PercentFrame(data.playTimeMS, data.lifeBarPercent));
+                totalScoreFrames.Add(new CumulativeFrame(data.playTimeMS, data.score));
+            }
+        }
+
+        void ISynthRidersEventHandler.OnNoteMiss(EventDataNoteMiss data)
+        {
+            if (inSong)
+            {
+                lifePctFrames.Add(new PercentFrame(data.playTimeMS, data.lifeBarPercent));
+            }
+        }
+
+        void ISynthRidersEventHandler.OnSceneChange(EventDataSceneChange data)
+        {            
+        }
+
+        void ISynthRidersEventHandler.OnReturnToMenu()
+        {
+            _logger.Msg("Return to menu");
+            inSong = false;
         }
     }
 }
