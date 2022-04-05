@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MelonLoader;
+using PerformanceMeter.Frames;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,28 +19,119 @@ namespace PerformanceMeter
         private static Color colorMarker = new Color(0.6f, 0.6f, 0.6f, 0.8f);
         private static Color colorAverageLine = new Color(0.9f, 0.9f, 0.9f, 0.5f);
 
-        private bool showAverageLine;
-        private int markerPeriodMs;
+        private readonly ConfigManager config;
 
-        public EndGameDisplay(bool showAverageLine, int markerPeriodMs)
+        public EndGameDisplay(ConfigManager config)
         {
-            this.showAverageLine = showAverageLine;
-            this.markerPeriodMs = markerPeriodMs;
+            this.config = config;
         }
 
+        /// <summary>
+        /// Injects graph into end game screen
+        /// </summary>
+        /// <param name="logger"></param>
+        /// <param name="lifePctFrames">Frames throughout song tracking life percentage</param>
+        /// <param name="bestScoreFrames">Best run's total score frames. If the same as current score, show last high score</param>
+        /// <param name="currentScoreFrames">Frames throughout song tracking total score</param>
         public void Inject(
             MelonLogger.Instance logger,
-            Dictionary<int, float> lifePctFrames
+            List<PercentFrame> lifePctFrames,
+            List<CumulativeFrame> bestScoreFrames,
+            List<CumulativeFrame> currentScoreFrames
         ) {
+            // If nothing is set to show, don't do anything
+            if (!config.showLifePercentGraph && !config.showTotalScoreComparisonGraph)
+            {
+                logger.Msg("No graphs enabled, not injecting.");
+                return;
+            }
+
             GameObject leftScreen = InjectLeftScreen(logger);
 
             InjectTitle(logger, leftScreen);
 
-            float avgLifePct = Utils.CalculateAverageLifePercent(lifePctFrames);
-            logger.Msg("Average life pct: " + avgLifePct);
-            InjectAverageLifePercentText(logger, leftScreen, avgLifePct);
+            // Get some existing objects for later reference
+            Transform parent = leftScreen.transform.Find("ScoreWrap");
+            if (parent == null)
+            {
+                logger.Msg("Failed to find root transform for graph");
+                return;
+            }
 
-            InjectLifePercentGraph(logger, leftScreen, lifePctFrames, avgLifePct);
+            Transform clonedStatTransform = parent.Find("Streak");
+            if (clonedStatTransform == null)
+            {
+                logger.Msg("Failed to find transform to clone for stats");
+                return;
+            }
+
+            // Life percent
+            if (config.showLifePercentGraph)
+            {
+                InjectLifePercentGraph(logger, parent, clonedStatTransform.gameObject, lifePctFrames);
+            }
+
+            // Total score comparison
+            if (config.showTotalScoreComparisonGraph)
+            {
+                InjectTotalScoreComparisonGraph(logger, parent, bestScoreFrames, currentScoreFrames);
+            }
+
+            clonedStatTransform.gameObject.SetActive(false);
+        }
+
+        private void InjectTotalScoreComparisonGraph(
+            MelonLogger.Instance logger,
+            Transform parent,
+            List<CumulativeFrame> bestScoreFrames,
+            List<CumulativeFrame> currentScoreFrames
+        ) {
+            RectTransform totalScoreGraphContainer = CreateGraphContainer(logger, parent, "pm_totalScoreContainer");
+
+            float topScore = Math.Max(bestScoreFrames.Last().Amount, currentScoreFrames.Last().Amount);
+            var currentScorePctFrames = currentScoreFrames.Select(cumFrame => cumFrame.ToPercentFrame(topScore)).ToList();
+            var bestScorePctFrames = bestScoreFrames.Select(cumFrame => cumFrame.ToPercentFrame(topScore)).ToList();
+
+            InjectPercentGraph(logger, totalScoreGraphContainer, bestScorePctFrames, pct => Color.white);
+            InjectPercentGraph(logger, totalScoreGraphContainer, currentScorePctFrames, pct => Color.yellow);
+        }
+
+        private void InjectLifePercentGraph(
+            MelonLogger.Instance logger,
+            Transform parent,
+            GameObject clonedStatGameObject,
+            List<PercentFrame> lifePctFrames
+        ) {
+            float avgLifePct = Utils.CalculateAveragePercent(lifePctFrames);
+            logger.Msg("Average life pct: " + avgLifePct);
+
+            RectTransform lifePctGraphContainer = CreateGraphContainer(logger, parent, "pm_lifePctContainer");
+            InjectAverageStat(logger, lifePctGraphContainer, clonedStatGameObject, "Average Life Percent: ", avgLifePct);
+            InjectPercentGraph(logger, lifePctGraphContainer, lifePctFrames, GetColorForLifePercent, avgLifePct);
+        }
+
+        /// <summary>
+        /// Creates a container GameObject to hold any one of the graph types
+        /// </summary>
+        /// <returns>RectTransform of the created container GameObject</returns>
+        private RectTransform CreateGraphContainer(MelonLogger.Instance logger, Transform parent, string containerName)
+        {
+            var container = new GameObject(containerName, typeof(Canvas));
+            container.transform.SetParent(parent, false);
+            container.AddComponent<CanvasRenderer>();
+            container.AddComponent<Image>();
+
+            var containerRect = container.GetComponent<RectTransform>();
+            containerRect.localPosition = Vector3.zero;
+            containerRect.localEulerAngles = Vector3.zero;
+            containerRect.anchorMin = new Vector2(0f, 0.5f);
+            containerRect.anchorMax = new Vector2(1f, 0.5f);
+            containerRect.sizeDelta = new Vector2(20.0f, 21.0f);
+            containerRect.anchoredPosition = new Vector2(0f, 5.0f);
+
+            container.GetComponent<Image>().color = Color.clear;
+
+            return containerRect;
         }
 
         /// <summary>
@@ -100,125 +192,69 @@ namespace PerformanceMeter
             root.gameObject.SetActive(true);
         }
 
-        private void InjectAverageLifePercentText(
+        private void InjectAverageStat(
             MelonLogger.Instance logger,
-            GameObject leftScreen,
-            float avgLifePct
+            Transform parent,
+            GameObject statToClone,
+            string labelText,
+            float averagePercent
         ) {
-            Transform root = leftScreen.transform.Find("ScoreWrap/Streak");
-            if (root == null)
-            {
-                logger.Msg("Failed to find root transform for average life percent text");
-                return;
-            }
+            var averageStat = GameObject.Instantiate(statToClone, parent, false);
+            averageStat.name = "pm_averageStatContainer";
 
-            root.name = "pm_avgLifePct";
+            averageStat.transform.localPosition = new Vector3(0.0f, 6.0f, 0.0f);
+            averageStat.transform.localEulerAngles = Vector3.zero;
 
-            var labelText = root.Find("Label").GetComponent<TMPro.TMP_Text>();
-            labelText.SetText("Average Life Percent: ");
+            var labelTMP = averageStat.transform.Find("Label").GetComponent<TMPro.TMP_Text>();
+            labelTMP.SetText(labelText);
 
-            var valueText = root.Find("Value").GetComponent<TMPro.TMP_Text>();
-            valueText.SetText(string.Format("{0:0.###}%", avgLifePct * 100));
+            var valueText = averageStat.transform.Find("Value").GetComponent<TMPro.TMP_Text>();
+            valueText.SetText(string.Format("{0:0.###}%", averagePercent * 100));
 
-            var transforms = root.GetComponentsInChildren<Transform>();
-            foreach (var transform in transforms) {
-                transform.localPosition += new Vector3(2.0f, 0.0f, 0.0f);
-            }
+            UnityUtil.DeleteChildren(logger, averageStat.transform, new string[] { "Label", "Value", "Bg" });
 
-            UnityUtil.DeleteChildren(logger, root, new string[] { "Label", "Value", "Bg" });
-
-            root.gameObject.SetActive(true);
+            averageStat.SetActive(true);
         }
 
-        /*private void InjectAverageLifePercent2(
+        private void InjectPercentGraph(
             MelonLogger.Instance logger,
-            GameObject leftScreen,
-            float avgLifePct
+            Transform parent,
+            List<PercentFrame> percentFrames,
+            Func<float, Color> fnGetColor,
+            float averagePercent = -1f
         ) {
-            // Use same background as center screen stats
-            Sprite bgSprite = leftScreen.transform.Find("ScoreWrap/Streak/Bg")?.GetComponent<SpriteRenderer>()?.sprite;
-            
-            var lbl = leftScreen.transform.Find("ScoreWrap/Streak/Label");
-            var fonts = lbl.GetComponentsInChildren<TMPro.TMP_FontAsset>();
-            foreach (var font in fonts)
-            {
-                logger.Msg(font.name + " // " + font.boldStyle);
-            }
-
-            GameObject container = new GameObject("pm_avgLifePctContainer", typeof(Canvas));
-            container.transform.SetParent(leftScreen.transform, false);
-            var containerRect = container.GetComponent<RectTransform>();
-            containerRect.anchorMin = new Vector2(0.0f, 0.0f);
-            containerRect.anchorMax = new Vector2(1.0f, 0.0f);
-            containerRect.sizeDelta = new Vector2(10.0f, 0.7f);
-
-            GameObject bg = new GameObject("pm_avgLifePctBg", typeof(Image));
-            bg.transform.SetParent(container.transform, false);
-            var bgRect = bg.GetComponent<RectTransform>();
-            FillParent(bgRect);
-            var bgImage = bg.GetComponent<Image>();
-            bgImage.sprite = bgSprite;
-
-            GameObject text = new GameObject("pm_avgLifePctText", typeof(TMPro.TextMeshPro));
-            text.transform.SetParent(container.transform, false);
-            var textTMP = text.GetComponent<TMPro.TextMeshPro>();
-            //textTMP.font = GameObject.Instantiate(Resources.FindObjectsOfTypeAll<TMPro.TMP_FontAsset>().First(t => t.name == "NotoSansJP-Bold"));
-            textTMP.fontSize = 6.0f;
-            textTMP.alignment = TMPro.TextAlignmentOptions.Center;
-            textTMP.SetText(string.Format("Average Life Percentage: {0:0.###}%", avgLifePct * 100));
-            textTMP.enableAutoSizing = true;
-
-            var textRect = text.GetComponent<RectTransform>();
-            textRect.anchorMin = new Vector2(0.0f, 0.0f);
-            textRect.anchorMax = new Vector2(1.0f, 0.0f);
-            textRect.localPosition = Vector3.zero;
-            textRect.sizeDelta = new Vector2(5.0f, 0.4f);
-        }*/
-
-        private void InjectLifePercentGraph(
-            MelonLogger.Instance logger,
-            GameObject leftScreen,
-            Dictionary<int, float> lifePctFrames,
-            float avgLifePct
-        ) {
-            Transform parent = leftScreen.transform.Find("ScoreWrap");
-            if (parent == null)
-            {
-                logger.Msg("Failed to find root transform for graph");
-                return;
-            }
-
             // Remove unused pieces
-            UnityUtil.DeleteChildren(logger, parent, new string[] { "pm_avgLifePct", "title" });
+            UnityUtil.DeleteChildren(logger, parent, new string[] { "pm_avgPct", "title" });
 
             // Container
-            GameObject graphContainer = new GameObject("pm_lifePctGraphContainer", typeof(Canvas));
+            GameObject graphContainer = new GameObject("pm_graphContainer", typeof(Canvas));
             graphContainer.transform.SetParent(parent, false);
 
             var containerRect = graphContainer.GetComponent<RectTransform>();
             containerRect.localPosition = Vector3.zero;
             containerRect.localEulerAngles = Vector3.zero;
-            containerRect.anchorMin = new Vector2(0.5f, 0.5f);
-            containerRect.anchorMax = new Vector2(0.5f, 0.5f);
+            containerRect.anchorMin = new Vector2(0.5f, 1f);
+            containerRect.anchorMax = new Vector2(0.5f, 1f);
             containerRect.sizeDelta = new Vector2(20.0f, 15.0f);
+            containerRect.anchoredPosition = new Vector2(0f, -16.0f);
 
-            // Border
-            var borderSprite = UnityUtil.CreateSpriteFromAssemblyResource(logger, "PerformanceMeter.Resources.Sprites.bg.png");
+            // Background
+            var backgroundSprite = UnityUtil.CreateSpriteFromAssemblyResource(logger, "PerformanceMeter.Resources.Sprites.bg.png");
 
-            GameObject graphBorder = GameObject.Instantiate(new GameObject("pm_lifePctGraphBg", typeof(Image)), graphContainer.transform);
-            var borderImage = graphBorder.GetComponent<Image>();
-            borderImage.sprite = borderSprite;
-            borderImage.color = Color.black;
+            GameObject graphBackground = GameObject.Instantiate(new GameObject("pm_graphBg", typeof(Image)), graphContainer.transform);
+            var backgroundImage = graphBackground.GetComponent<Image>();
+            backgroundImage.sprite = backgroundSprite;
+            backgroundImage.color = Color.black;
 
-            FillParent(graphBorder.GetComponent<RectTransform>());
+            FillParent(graphBackground.GetComponent<RectTransform>());
 
             // Side indicators 0 / 100
-            var label100 = CreateLabel(graphBorder.transform, new Vector2(-0.6f, 0.0f), "100");
+            var label100 = CreateLabel(graphBackground.transform, new Vector2(-0.6f, 0.0f), "100");
             label100.anchorMin = new Vector2(0f, 1f);
             label100.anchorMax = new Vector2(0f, 1f);
             label100.GetComponent<TMPro.TextMeshPro>().alignment = TMPro.TextAlignmentOptions.MidlineRight;
 
-            var label0 = CreateLabel(graphBorder.transform, new Vector2(-0.25f, 0.0f), "0");
+            var label0 = CreateLabel(graphBackground.transform, new Vector2(-0.25f, 0.0f), "0");
             label0.anchorMin = new Vector2(0f, 0f);
             label0.anchorMax = new Vector2(0f, 0f);
 
@@ -229,21 +265,21 @@ namespace PerformanceMeter
 
             // Nodes
             var pointSprite = UnityUtil.CreateSpriteFromAssemblyResource(logger, "PerformanceMeter.Resources.Sprites.circle.png");
-            AddPointsToGraph(graphableRect, pointSprite, lifePctFrames);
+            AddPointsToGraph(graphableRect, pointSprite, percentFrames, fnGetColor);
 
             // Time markers
-            // Treat last recorded life event as end of song (ignoring outros etc)
-            float songDurationMs = lifePctFrames.Last().Key;
-            logger.Msg("Duration: " + songDurationMs + "; first frame at " + lifePctFrames.First().Key);
-            for (var markerMs = markerPeriodMs; markerMs < songDurationMs; markerMs += markerPeriodMs)
+            // Treat last recorded event as end of song (ignoring outros etc)
+            float songDurationMs = percentFrames.Last().TimeMs;
+            for (var markerMs = config.markerPeriodMs; markerMs < songDurationMs; markerMs += config.markerPeriodMs)
             {
                 float pctX = markerMs / songDurationMs;
                 CreateTimeMarker(graphableRect, pctX);
             }
 
-            if (showAverageLine)
+            // Average line
+            if (config.showAverageLine && averagePercent >= 0)
             {
-                CreateAverageLine(graphableRect, avgLifePct);
+                CreateAverageLine(graphableRect, averagePercent);
             }
         }
 
@@ -256,7 +292,7 @@ namespace PerformanceMeter
         /// <returns>RectTransform of the new label</returns>
         private RectTransform CreateLabel(Transform parent, Vector2 anchoredPosition, string text)
         {
-            var label = new GameObject("pm_lifePctGraphLabel", typeof(TMPro.TextMeshPro));
+            var label = new GameObject("pm_graphLabel", typeof(TMPro.TextMeshPro));
             label.transform.SetParent(parent, false);
             var labelRect = label.GetComponent<RectTransform>();
             labelRect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -273,7 +309,7 @@ namespace PerformanceMeter
 
         private RectTransform CreateGraphableRegion(Transform graphContainer, Vector2 sizeDelta)
         {
-            var graphableRegion = new GameObject("pm_lifePctGraphArea", typeof(Canvas));
+            var graphableRegion = new GameObject("pm_graphArea", typeof(Canvas));
             graphableRegion.transform.SetParent(graphContainer.transform, false);
             graphableRegion.AddComponent<CanvasRenderer>();
 
@@ -287,28 +323,34 @@ namespace PerformanceMeter
             return graphableRect;
         }
 
-        private void AddPointsToGraph(RectTransform graphableRect, Sprite pointSprite, Dictionary<int, float> lifePctFrames)
-        {
-            float lastTimeMs = lifePctFrames.Last().Key;
+        private void AddPointsToGraph(
+            RectTransform graphableRect,
+            Sprite pointSprite,
+            List<PercentFrame> pctFrames,
+            Func<float, Color> fnGetColor
+        ) {
+            float lastTimeMs = pctFrames.Last().TimeMs;
             RectTransform previousDot = null;
             float previousPct = 0f;
-            foreach (KeyValuePair<int, float> frameData in lifePctFrames)
+            foreach (PercentFrame frameData in pctFrames)
             {
-                float pctTime = frameData.Key / lastTimeMs;
-                float lifePct = frameData.Value;
-                GameObject dot = CreatePoint(graphableRect, pointSprite, pctTime, lifePct);
+                float percentTime = frameData.TimeMs / lastTimeMs;
+                float percentOfTotal = frameData.PercentOfTotal;
+                Color color = fnGetColor(percentOfTotal);
+                GameObject dot = CreatePoint(graphableRect, pointSprite, percentTime, percentOfTotal, color);
                 RectTransform newRect = dot.GetComponent<RectTransform>();
                 if (previousDot != null)
                 {
+                    Color lineColor = fnGetColor((previousPct + percentOfTotal) / 2.0f);
                     CreateLineSegment(
                         graphableRect,
                         previousDot.anchoredPosition,
                         newRect.anchoredPosition,
-                        GetColorForPercent((previousPct + lifePct) / 2.0f)
+                        lineColor
                     );
                 }
                 previousDot = newRect;
-                previousPct = lifePct;
+                previousPct = percentOfTotal;
             }
         }
 
@@ -319,7 +361,7 @@ namespace PerformanceMeter
             rect.sizeDelta = Vector2.zero;
         }
 
-        private GameObject CreatePoint(RectTransform graphContainer, Sprite sprite, float pctTime, float lifePct)
+        private GameObject CreatePoint(RectTransform graphContainer, Sprite sprite, float pctTime, float pctOfTotal, Color color)
         {
             float graphWidth = graphContainer.sizeDelta.x;
             float graphHeight = graphContainer.sizeDelta.y;
@@ -332,12 +374,12 @@ namespace PerformanceMeter
             {
                 image.sprite = sprite;
             }
-            image.color = GetColorForPercent(lifePct);
+            image.color = color;
             image.enabled = true;
 
             var rectTransform = dot.GetComponent<RectTransform>();
-            rectTransform.anchoredPosition = new Vector2(pctTime * graphWidth, lifePct * graphHeight);
-            rectTransform.sizeDelta = new Vector2(0.04f, 0.06f);
+            rectTransform.anchoredPosition = new Vector2(pctTime * graphWidth, pctOfTotal * graphHeight);
+            rectTransform.sizeDelta = new Vector2(0.04f, 0.04f);
             rectTransform.anchorMin = new Vector2(0, 0);
             rectTransform.anchorMax = new Vector2(0, 0);
 
@@ -365,7 +407,7 @@ namespace PerformanceMeter
             return marker;
         }
 
-        private GameObject CreateAverageLine(RectTransform graphContainer, float avgLifePct)
+        private GameObject CreateAverageLine(RectTransform graphContainer, float averagePercent)
         {
             var graphHeight = graphContainer.sizeDelta.y;
 
@@ -380,7 +422,7 @@ namespace PerformanceMeter
             rectTransform.anchorMin = new Vector2(0, 0);
             rectTransform.anchorMax = new Vector2(1, 0);
             rectTransform.sizeDelta = new Vector2(0f, 0.04f);
-            rectTransform.anchoredPosition = new Vector2(0f, avgLifePct * graphHeight);
+            rectTransform.anchoredPosition = new Vector2(0f, averagePercent * graphHeight);
 
             return line;
         }
@@ -399,14 +441,14 @@ namespace PerformanceMeter
             var distance = Vector2.Distance(from, to);
             rectTransform.anchorMin = new Vector2(0, 0);
             rectTransform.anchorMax = new Vector2(0, 0);
-            rectTransform.sizeDelta = new Vector2(distance, 0.04f);
+            rectTransform.sizeDelta = new Vector2(distance, 0.06f);
             rectTransform.anchoredPosition = from + direction * distance * .5f;
             rectTransform.localEulerAngles = new Vector3(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
 
             return segment;
         }
 
-        private static Color GetColorForPercent(float lifePct)
+        private static Color GetColorForLifePercent(float lifePct)
         {
             Color color;
 
