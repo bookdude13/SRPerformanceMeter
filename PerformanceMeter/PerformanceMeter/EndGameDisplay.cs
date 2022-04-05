@@ -379,7 +379,7 @@ namespace PerformanceMeter
 
             var rectTransform = dot.GetComponent<RectTransform>();
             rectTransform.anchoredPosition = new Vector2(pctTime * graphWidth, pctOfTotal * graphHeight);
-            rectTransform.sizeDelta = new Vector2(0.04f, 0.06f);
+            rectTransform.sizeDelta = new Vector2(0.04f, 0.04f);
             rectTransform.anchorMin = new Vector2(0, 0);
             rectTransform.anchorMax = new Vector2(0, 0);
 
@@ -441,7 +441,7 @@ namespace PerformanceMeter
             var distance = Vector2.Distance(from, to);
             rectTransform.anchorMin = new Vector2(0, 0);
             rectTransform.anchorMax = new Vector2(0, 0);
-            rectTransform.sizeDelta = new Vector2(distance, 0.04f);
+            rectTransform.sizeDelta = new Vector2(distance, 0.06f);
             rectTransform.anchoredPosition = from + direction * distance * .5f;
             rectTransform.localEulerAngles = new Vector3(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
 
