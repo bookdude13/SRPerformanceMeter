@@ -27,22 +27,30 @@ namespace PerformanceMeter
         }
 
         /// <summary>
-        /// 
+        /// Injects graph into end game screen
         /// </summary>
         /// <param name="logger"></param>
-        /// <param name="lifePctFrames"></param>
-        /// <param name="bestScoreFrames">If the same as current score, show last high score</param>
-        /// <param name="currentScoreFrames"></param>
+        /// <param name="lifePctFrames">Frames throughout song tracking life percentage</param>
+        /// <param name="bestScoreFrames">Best run's total score frames. If the same as current score, show last high score</param>
+        /// <param name="currentScoreFrames">Frames throughout song tracking total score</param>
         public void Inject(
             MelonLogger.Instance logger,
             List<PercentFrame> lifePctFrames,
             List<CumulativeFrame> bestScoreFrames,
             List<CumulativeFrame> currentScoreFrames
         ) {
+            // If nothing is set to show, don't do anything
+            if (!config.showLifePercentGraph && !config.showTotalScoreComparisonGraph)
+            {
+                logger.Msg("No graphs enabled, not injecting.");
+                return;
+            }
+
             GameObject leftScreen = InjectLeftScreen(logger);
 
             InjectTitle(logger, leftScreen);
 
+            // Get some existing objects for later reference
             Transform parent = leftScreen.transform.Find("ScoreWrap");
             if (parent == null)
             {
@@ -58,9 +66,26 @@ namespace PerformanceMeter
             }
 
             // Life percent
-            InjectLifePercentGraph(logger, parent, clonedStatTransform.gameObject, lifePctFrames);
+            if (config.showLifePercentGraph)
+            {
+                InjectLifePercentGraph(logger, parent, clonedStatTransform.gameObject, lifePctFrames);
+            }
 
             // Total score comparison
+            if (config.showTotalScoreComparisonGraph)
+            {
+                InjectTotalScoreComparisonGraph(logger, parent, bestScoreFrames, currentScoreFrames);
+            }
+
+            clonedStatTransform.gameObject.SetActive(false);
+        }
+
+        private void InjectTotalScoreComparisonGraph(
+            MelonLogger.Instance logger,
+            Transform parent,
+            List<CumulativeFrame> bestScoreFrames,
+            List<CumulativeFrame> currentScoreFrames
+        ) {
             RectTransform totalScoreGraphContainer = CreateGraphContainer(logger, parent, "pm_totalScoreContainer");
 
             float topScore = Math.Max(bestScoreFrames.Last().Amount, currentScoreFrames.Last().Amount);
@@ -69,8 +94,6 @@ namespace PerformanceMeter
 
             InjectPercentGraph(logger, totalScoreGraphContainer, bestScorePctFrames, pct => Color.white);
             InjectPercentGraph(logger, totalScoreGraphContainer, currentScorePctFrames, pct => Color.yellow);
-
-            clonedStatTransform.gameObject.SetActive(false);
         }
 
         private void InjectLifePercentGraph(

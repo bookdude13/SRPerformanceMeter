@@ -17,7 +17,9 @@ namespace PerformanceMeter
 
         public MelonPreferences_Category prefs;
         public bool isEnabled = true;
+        public bool showLifePercentGraph = true;
         public bool showAverageLine = true;
+        public bool showTotalScoreComparisonGraph = true;
         public int markerPeriodMs = 30000;
 
         public ConfigManager(string modDirectory)
@@ -52,6 +54,12 @@ namespace PerformanceMeter
                 var showAverageLineEntry = prefs.CreateEntry("showAverageLine", true, "Show Average Line");
                 showAverageLine = showAverageLineEntry.Value;
 
+                var showLifePercentGraphEntry = prefs.CreateEntry("showLifePercentGraph", true, "Show Life Percentage Graph");
+                showLifePercentGraph = showLifePercentGraphEntry.Value;
+
+                var showTotalScoreComparisonGraphEntry = prefs.CreateEntry("showTotalScoreComparisonGraph", true, "Show Total Score Comparison Graph");
+                showTotalScoreComparisonGraph = showTotalScoreComparisonGraphEntry.Value;
+
                 var markerPeriodMsEntry = prefs.CreateEntry("markerPeriodMs", 30000, "Marker Period (ms)");
                 markerPeriodMs = markerPeriodMsEntry.Value;
                 if (markerPeriodMs < MARKER_PERIOD_MIN_MS)
@@ -64,6 +72,8 @@ namespace PerformanceMeter
                 logger.Msg("Config Loaded");
                 logger.Msg("  Enabled? " + isEnabled);
                 logger.Msg("  Show average line? " + showAverageLine);
+                logger.Msg("  Show life percent graph? " + showLifePercentGraph);
+                logger.Msg("  Show total score comparison graph? " + showTotalScoreComparisonGraph);
                 logger.Msg("  markerPeriodMs: " + markerPeriodMs);
             }
             catch (Exception e)
