@@ -113,16 +113,6 @@ namespace PerformanceMeter.Graphs
 
             FillParent(graphBackground.GetComponent<RectTransform>());
 
-            /*// Side indicators 0 / 100
-            var label100 = CreateLabel(graphBackground.transform, new Vector2(-0.6f, 0.0f), "100");
-            label100.anchorMin = new Vector2(0f, 1f);
-            label100.anchorMax = new Vector2(0f, 1f);
-            label100.GetComponent<TMPro.TextMeshPro>().alignment = TMPro.TextAlignmentOptions.MidlineRight;
-
-            var label0 = CreateLabel(graphBackground.transform, new Vector2(-0.25f, 0.0f), "0");
-            label0.anchorMin = new Vector2(0f, 0f);
-            label0.anchorMax = new Vector2(0f, 0f);*/
-
             // Graphable Region
             var padding = new Vector2(0.4f, 0.4f);
             var graphableRegionSize = containerRect.sizeDelta - padding;

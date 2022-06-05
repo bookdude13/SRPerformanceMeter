@@ -22,7 +22,7 @@ namespace PerformanceMeter
         private static readonly string SCENE_NAME_GAME_END = "3.GameEnd";
         private static readonly string modDirectory = "UserData/PerformanceMeter";
 
-        private static MelonLogger.Instance _logger;
+        private static MelonLoggerWrapper _logger;
         private static ConfigManager config;
         private static BestRunService bestRunService;
         private static PlayConfigurationService playConfigurationService;
@@ -37,7 +37,7 @@ namespace PerformanceMeter
 
         public override void OnApplicationStart()
         {
-            _logger = LoggerInstance;
+            _logger = new MelonLoggerWrapper(LoggerInstance);
             
             config = new ConfigManager(modDirectory);
             config.Initialize(_logger);
@@ -54,8 +54,6 @@ namespace PerformanceMeter
 
             endGameDisplay = new EndGameDisplay(config);
 
-            var wrappedLogger = new MelonLoggerWrapper(_logger);
-
             try
             {
                 _logger.Msg("Setting up database...");
@@ -63,11 +61,11 @@ namespace PerformanceMeter
                 var db = new LiteDB.LiteDatabase(string.Format("Filename={0}", dbPath));
 
                 _logger.Msg("Setting up repos....");
-                var playConfigurationRepo = new PlayConfigurationRepository(wrappedLogger, db);
-                playConfigurationService = new PlayConfigurationService(wrappedLogger, playConfigurationRepo);
+                var playConfigurationRepo = new PlayConfigurationRepository(_logger, db);
+                playConfigurationService = new PlayConfigurationService(_logger, playConfigurationRepo);
 
-                var bestRunRepo = new BestRunRepository(wrappedLogger, db);
-                bestRunService = new BestRunService(wrappedLogger, bestRunRepo);
+                var bestRunRepo = new BestRunRepository(_logger, db);
+                bestRunService = new BestRunService(_logger, bestRunRepo);
             }
             catch (Exception e)
             {
@@ -76,7 +74,7 @@ namespace PerformanceMeter
             }
 
             _logger.Msg("Setting up websocket manager...");
-            websocketManager = new SynthRidersEventsManager(_logger, "ws://localhost:9000", this);
+            websocketManager = new SynthRidersEventsManager(LoggerInstance, "ws://localhost:9000", this);
 
             _logger.Msg("Initialized.");
         }

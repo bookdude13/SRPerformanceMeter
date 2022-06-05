@@ -48,7 +48,7 @@ namespace PerformanceMeter
          * Prints out the game object tree/hierarchy below the given root object to the logs.
          * Useful for finding objects to clone/instantiate :)
          */
-        public static void LogGameObjectHierarchy(MelonLogger.Instance logger, Transform root, int indentLevel = 0)
+        public static void LogGameObjectHierarchy(MelonLoggerWrapper logger, Transform root, int indentLevel = 0)
         {
             if (root == null)
             {
@@ -95,7 +95,7 @@ namespace PerformanceMeter
          * Prints out the components attached to the given game object and all children.
          * Useful for describing objects to clone/instantiate
          */
-        public static void LogComponentsRecursive(MelonLogger.Instance logger, Transform root, string tabs = "")
+        public static void LogComponentsRecursive(MelonLoggerWrapper logger, Transform root, string tabs = "")
         {
             if (root == null)
             {

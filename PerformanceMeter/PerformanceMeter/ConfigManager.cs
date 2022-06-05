@@ -27,7 +27,7 @@ namespace PerformanceMeter
             this.modDirectory = modDirectory;
         }
 
-        public void Initialize(MelonLogger.Instance logger)
+        public void Initialize(MelonLoggerWrapper logger)
         {
             prefs = MelonPreferences.CreateCategory("MainPreferences", "Preferences");
 

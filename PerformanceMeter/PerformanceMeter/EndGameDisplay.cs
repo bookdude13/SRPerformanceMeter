@@ -13,13 +13,6 @@ namespace PerformanceMeter
 {
     class EndGameDisplay
     {
-        private static Color red = Color.red;
-        private static Color orange = new Color(1.0f, 0.65f, 0.0f);
-        private static Color yellowGreen = new Color(0.81f, 0.98f, 0.2f);
-        private static Color green = Color.green;
-        private static Color colorMarker = new Color(0.6f, 0.6f, 0.6f, 0.8f);
-        private static Color colorAverageLine = new Color(0.9f, 0.9f, 0.9f, 0.5f);
-
         private readonly ConfigManager config;
         private List<EndGameGraph> graphDisplays = new List<EndGameGraph>();
         private TMPro.TextMeshProUGUI selectionTitle;
@@ -189,7 +182,7 @@ namespace PerformanceMeter
         /// Clones the center screen and moves it to the left to put additional statistics.
         /// Returns the left screen parent GameObject.
         /// </summary>
-        /// <param name="logger">Main MelonLogger.Instance</param>
+        /// <param name="logger">Main logger instance</param>
         /// <returns>Root GameObject for created left screen</returns>
         private GameObject InjectLeftScreen(MelonLoggerWrapper logger)
         {
@@ -241,30 +234,6 @@ namespace PerformanceMeter
             UnityUtil.DeleteChildren(logger, root, new string[] { "Label", "Value" });
 
             root.gameObject.SetActive(true);
-        }
-
-        /// <summary>
-        /// Creates label with text within parent, anchored at (0.5, 0.5)
-        /// </summary>
-        /// <param name="parent">Parent of new label</param>
-        /// <param name="anchoredPosition">Position of text relative to anchor point</param>
-        /// <param name="text">Text to set</param>
-        /// <returns>RectTransform of the new label</returns>
-        private RectTransform CreateLabel(Transform parent, Vector2 anchoredPosition, string text)
-        {
-            var label = new GameObject("pm_graphLabel", typeof(TMPro.TextMeshPro));
-            label.transform.SetParent(parent, false);
-            var labelRect = label.GetComponent<RectTransform>();
-            labelRect.anchorMin = new Vector2(0.5f, 0.5f);
-            labelRect.anchorMax = new Vector2(0.5f, 0.5f);
-            labelRect.anchoredPosition = anchoredPosition;
-
-            var labelTMP = label.GetComponent<TMPro.TextMeshPro>();
-            labelTMP.fontSize = 6f;
-            labelTMP.SetText(text);
-            labelTMP.autoSizeTextContainer = true;
-
-            return labelRect;
         }
     }
 }
