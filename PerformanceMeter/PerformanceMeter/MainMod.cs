@@ -143,7 +143,7 @@ namespace PerformanceMeter
 
                 if (lifePctFrames.Count > 0 && totalScoreFrames.Count > 0 && highScoreRun != null)
                 {
-                    endGameDisplay.Inject(LoggerInstance, lifePctFrames, highScoreRun.TotalScoreFrames, totalScoreFrames);
+                    endGameDisplay.Inject(new MelonLoggerWrapper(LoggerInstance), lifePctFrames, highScoreRun.TotalScoreFrames, totalScoreFrames);
                 }
             }
         }

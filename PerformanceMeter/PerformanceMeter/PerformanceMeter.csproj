@@ -82,9 +82,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConfigManager.cs" />
+    <Compile Include="Graphs\EndGameGraph.cs" />
     <Compile Include="Frames\CumulativeFrame.cs" />
     <Compile Include="EndGameDisplay.cs" />
     <Compile Include="Frames\PercentFrame.cs" />
+    <Compile Include="Graphs\EndGameGraphLifePercent.cs" />
+    <Compile Include="Graphs\EndGameGraphTotalScore.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="MelonLoggerWrapper.cs" />
     <Compile Include="Models\LifePercentRun.cs" />

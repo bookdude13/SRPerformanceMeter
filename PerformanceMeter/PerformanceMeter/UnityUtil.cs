@@ -165,7 +165,7 @@ namespace PerformanceMeter
         /// </summary>
         /// <param name="parent">Parent of deleted children</param>
         /// <param name="whitelistedNames">GameObject names of immediate children to not delete. If null, all are deleted.</param>
-        public static void DeleteChildren(MelonLogger.Instance logger, Transform parent, string[] whitelistedNames = null)
+        public static void DeleteChildren(MelonLoggerWrapper logger, Transform parent, string[] whitelistedNames = null)
         {
             if (parent == null)
             {
@@ -205,7 +205,7 @@ namespace PerformanceMeter
             }
         }
 
-        public static Sprite CreateSpriteFromAssemblyResource(MelonLogger.Instance logger, string path)
+        public static Sprite CreateSpriteFromAssemblyResource(MelonLoggerWrapper logger, string path)
         {
             try
             {

@@ -20,5 +20,10 @@ namespace PerformanceMeter
         {
             melonLogger.Msg(message);
         }
+
+        public void Error(string message, Exception ex)
+        {
+            melonLogger.Error(message, ex);
+        }
     }
 }
