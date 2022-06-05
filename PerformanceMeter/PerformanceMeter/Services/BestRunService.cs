@@ -63,7 +63,6 @@ namespace PerformanceMeter.Services
 
         public void UpdateBestLifePercent(PlayConfiguration playConfiguration, float averageLifePercent, List<PercentFrame> lifePercentFrames)
         {
-            // TODO distinguish between raw (no mod) and normal (with mod)
             LifePercentRun newEntry = new LifePercentRun(averageLifePercent, lifePercentFrames);
 
             BestRun bestRun = repo.GetBestRun(playConfiguration.Id);

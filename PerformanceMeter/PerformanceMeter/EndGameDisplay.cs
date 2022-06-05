@@ -48,7 +48,7 @@ namespace PerformanceMeter
 
             GameObject leftScreen = InjectLeftScreen(logger);
 
-            InjectTitle(logger, leftScreen);
+            InjectMainTitle(logger, leftScreen);
 
             // Get some existing objects for later reference
             Transform parent = leftScreen.transform.Find("ScoreWrap");
@@ -65,6 +65,17 @@ namespace PerformanceMeter
                 return;
             }
 
+            Transform clonedButtonTransform = leftScreen.transform.Find("Buttons/StandardButton - Retry");
+            if (clonedButtonTransform == null)
+            {
+                logger.Msg("Failed to find transform to clone for button");
+                return;
+            }
+
+            // Select each graph type
+            var selectionContainer = InjectSelectionButtons(logger, leftScreen.transform);
+            InjectSelectionTitle(logger, selectionContainer, "PLACEHOLDER");
+
             // Life percent
             if (config.showLifePercentGraph)
             {
@@ -78,6 +89,73 @@ namespace PerformanceMeter
             }
 
             clonedStatTransform.gameObject.SetActive(false);
+        }
+
+        private TMPro.TextMeshProUGUI InjectSelectionTitle(MelonLogger.Instance logger, Transform parent, string titleText)
+        {
+            var label = new GameObject("pm_selectionTitle", typeof(TMPro.TextMeshProUGUI));
+            label.transform.SetParent(parent, false);
+
+            var labelRect = label.GetComponent<RectTransform>();
+            labelRect.anchorMin = new Vector2(0.5f, 0.5f);
+            labelRect.anchorMax = new Vector2(0.5f, 0.5f);
+            labelRect.anchoredPosition = Vector2.zero;
+
+            var labelTMP = label.GetComponent<TMPro.TextMeshProUGUI>();
+            labelTMP.fontSize = 1f;
+            labelTMP.SetText(titleText);
+            labelTMP.autoSizeTextContainer = true;
+
+            return labelTMP;
+        }
+
+        private Transform InjectSelectionButtons(MelonLogger.Instance logger, Transform parent)
+        {
+            var selectionContainer = new GameObject("pm_selectionContainer", typeof(Canvas));
+            selectionContainer.transform.SetParent(parent, false);
+            selectionContainer.transform.localPosition = new Vector3(0f, 0f, 12.5f);
+            selectionContainer.transform.localEulerAngles = Vector3.zero;
+
+            var containerRect = selectionContainer.GetComponent<RectTransform>();
+            containerRect.anchorMin = new Vector2(0.5f, 0.0f);
+            containerRect.anchorMax = new Vector2(0.5f, 0.0f);
+            containerRect.sizeDelta = new Vector2(18.0f, 3.0f);
+            containerRect.anchoredPosition = new Vector2(0.0f, 12.0f);
+
+            var image = selectionContainer.AddComponent<Image>();
+            image.color = Color.green;
+
+            // Left
+            var btnLeft = new GameObject("pm_selectionBtnLeft", typeof(RectTransform));
+            btnLeft.transform.SetParent(containerRect);
+            btnLeft.transform.localPosition = Vector3.zero;
+            btnLeft.transform.localEulerAngles = Vector3.zero;
+
+            var btnLeftRect = btnLeft.GetComponent<RectTransform>();
+            btnLeftRect.anchorMin = new Vector2(0.0f, 0.0f);
+            btnLeftRect.anchorMax = new Vector2(0.0f, 1.0f);
+            btnLeftRect.sizeDelta = new Vector2(2.0f, 1.0f);
+            btnLeftRect.anchoredPosition = new Vector2(1.0f, 0.0f);
+
+            var leftImg = btnLeft.AddComponent<Image>();
+            leftImg.color = Color.blue;
+
+            // Right
+            var btnRight = new GameObject("pm_selectionBtnRight", typeof(RectTransform));
+            btnRight.transform.SetParent(containerRect);
+            btnRight.transform.localPosition = Vector3.zero;
+            btnRight.transform.localEulerAngles = Vector3.zero;
+
+            var btnRightRect = btnRight.GetComponent<RectTransform>();
+            btnRightRect.anchorMin = new Vector2(1.0f, 0.0f);
+            btnRightRect.anchorMax = new Vector2(1.0f, 1.0f);
+            btnRightRect.sizeDelta = new Vector2(2.0f, 1.0f);
+            btnRightRect.anchoredPosition = new Vector2(-1.0f, 0.0f);
+
+            var rightImg = btnRight.AddComponent<Image>();
+            rightImg.color = Color.red;
+
+            return selectionContainer.transform;
         }
 
         private void InjectTotalScoreComparisonGraph(
@@ -126,7 +204,7 @@ namespace PerformanceMeter
             containerRect.localEulerAngles = Vector3.zero;
             containerRect.anchorMin = new Vector2(0f, 0.5f);
             containerRect.anchorMax = new Vector2(1f, 0.5f);
-            containerRect.sizeDelta = new Vector2(20.0f, 21.0f);
+            containerRect.sizeDelta = new Vector2(20.0f, 14.0f);
             containerRect.anchoredPosition = new Vector2(0f, 5.0f);
 
             container.GetComponent<Image>().color = Color.clear;
@@ -169,7 +247,7 @@ namespace PerformanceMeter
             return leftScreen;
         }
 
-        private void InjectTitle(MelonLogger.Instance logger, GameObject leftScreen)
+        private void InjectMainTitle(MelonLogger.Instance logger, GameObject leftScreen)
         {
             Transform root = leftScreen.transform.Find("ScoreWrap/TotalScore");
             if (root == null)
@@ -202,7 +280,7 @@ namespace PerformanceMeter
             var averageStat = GameObject.Instantiate(statToClone, parent, false);
             averageStat.name = "pm_averageStatContainer";
 
-            averageStat.transform.localPosition = new Vector3(0.0f, 6.0f, 0.0f);
+            averageStat.transform.localPosition = new Vector3(0.0f, 0.5f, 0.0f);
             averageStat.transform.localEulerAngles = Vector3.zero;
 
             var labelTMP = averageStat.transform.Find("Label").GetComponent<TMPro.TMP_Text>();
