@@ -22,6 +22,7 @@ namespace PerformanceMeter
 
         private readonly ConfigManager config;
         private List<EndGameGraph> graphDisplays = new List<EndGameGraph>();
+        private TMPro.TextMeshProUGUI selectionTitle;
 
         public EndGameDisplay(ConfigManager config)
         {
@@ -92,9 +93,29 @@ namespace PerformanceMeter
 
             // Select each graph type
             var selectionContainer = InjectSelectionButtons(logger, leftScreen.transform);
-            InjectSelectionTitle(logger, selectionContainer, "PLACEHOLDER");
+            selectionTitle = InjectSelectionTitle(logger, selectionContainer, "No graph set in config");
+
+            SelectGraph(logger, 1);
 
             clonedStatTransform.gameObject.SetActive(false);
+        }
+
+        private void SelectGraph(MelonLoggerWrapper logger, int index)
+        {
+            if (index < 0 || index >= graphDisplays.Count)
+            {
+                logger.Msg("Graph index out of range; ignoring index " + index + " with count " + graphDisplays.Count);
+                return;
+            }
+
+            selectionTitle.SetText("");
+            foreach (var graphDisplay in graphDisplays)
+            {
+                graphDisplay.Hide();
+            }
+
+            selectionTitle.SetText(graphDisplays[index].GetTitle());
+            graphDisplays[index].Show();
         }
 
         private TMPro.TextMeshProUGUI InjectSelectionTitle(MelonLoggerWrapper logger, Transform parent, string titleText)

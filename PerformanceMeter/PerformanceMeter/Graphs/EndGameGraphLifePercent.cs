@@ -29,22 +29,15 @@ namespace PerformanceMeter.Graphs
             float avgLifePct = Utils.CalculateAveragePercent(lifePctFrames);
             logger.Msg("Average life pct: " + avgLifePct);
 
-            RectTransform lifePctGraphContainer = CreateGraphContainer(logger, parent, "pm_lifePctContainer");
-            InjectAverageStat(logger, lifePctGraphContainer, clonedStatGameObject, "Average Life Percent: ", avgLifePct);
-            InjectPercentGraph(logger, lifePctGraphContainer, lifePctFrames, GetColorForLifePercent, avgLifePct);
+            CreateGraphContainer(logger, parent, "pm_lifePctContainer");
+            InjectAverageStat(logger, container, clonedStatGameObject, "Average Life Percent: ", avgLifePct);
+            InjectPercentGraph(logger, container, lifePctFrames, GetColorForLifePercent, avgLifePct);
         }
 
-        public override void Show()
+        public override string GetTitle()
         {
-            throw new NotImplementedException();
+            return "Life Percentage";
         }
-
-        public override void Hide()
-        {
-            throw new NotImplementedException();
-        }
-
-
 
         private void InjectAverageStat(
             MelonLoggerWrapper logger,

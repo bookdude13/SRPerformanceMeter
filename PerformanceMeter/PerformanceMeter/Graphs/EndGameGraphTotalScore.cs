@@ -25,24 +25,19 @@ namespace PerformanceMeter.Graphs
 
         public override void Inject(MelonLoggerWrapper logger, Transform parent)
         {
-            RectTransform totalScoreGraphContainer = CreateGraphContainer(logger, parent, "pm_totalScoreContainer");
+            CreateGraphContainer(logger, parent, "pm_totalScoreContainer");
 
             float topScore = Math.Max(bestScoreFrames.Last().Amount, currentScoreFrames.Last().Amount);
             var currentScorePctFrames = currentScoreFrames.Select(cumFrame => cumFrame.ToPercentFrame(topScore)).ToList();
             var bestScorePctFrames = bestScoreFrames.Select(cumFrame => cumFrame.ToPercentFrame(topScore)).ToList();
 
-            InjectPercentGraph(logger, totalScoreGraphContainer, bestScorePctFrames, pct => Color.white);
-            InjectPercentGraph(logger, totalScoreGraphContainer, currentScorePctFrames, pct => Color.yellow);
+            InjectPercentGraph(logger, container, bestScorePctFrames, pct => Color.white);
+            InjectPercentGraph(logger, container, currentScorePctFrames, pct => Color.yellow);
         }
 
-        public override void Show()
+        public override string GetTitle()
         {
-            throw new NotImplementedException();
-        }
-
-        public override void Hide()
-        {
-            throw new NotImplementedException();
+            return "Total Score";
         }
     }
 }

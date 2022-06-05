@@ -19,6 +19,7 @@ namespace PerformanceMeter.Graphs
         protected static Color colorAverageLine = new Color(0.9f, 0.9f, 0.9f, 0.5f);
 
         protected ConfigManager config;
+        protected RectTransform container = null;
 
         protected EndGameGraph(ConfigManager config)
         {
@@ -26,14 +27,24 @@ namespace PerformanceMeter.Graphs
         }
 
         public abstract void Inject(MelonLoggerWrapper logger, Transform parent);
-        public abstract void Show();
-        public abstract void Hide();
+        public abstract string GetTitle();
+
+        public void Show()
+        {
+            this.container?.gameObject.SetActive(true);
+        }
+
+        public void Hide()
+        {
+            this.container?.gameObject.SetActive(false);
+        }
 
         /// <summary>
-        /// Creates a container GameObject to hold any one of the graph types
+        /// Creates a container GameObject to hold any one of the graph types.
+        /// Needs to be called from Inject() before being used as a parent Transform
         /// </summary>
         /// <returns>RectTransform of the created container GameObject</returns>
-        protected RectTransform CreateGraphContainer(MelonLoggerWrapper logger, Transform parent, string containerName)
+        protected void CreateGraphContainer(MelonLoggerWrapper logger, Transform parent, string containerName)
         {
             var container = new GameObject(containerName, typeof(Canvas));
             container.transform.SetParent(parent, false);
@@ -50,7 +61,7 @@ namespace PerformanceMeter.Graphs
 
             container.GetComponent<Image>().color = Color.clear;
 
-            return containerRect;
+            this.container = containerRect;
         }
 
         protected RectTransform CreateGraphableRegion(Transform graphContainer, Vector2 sizeDelta)
