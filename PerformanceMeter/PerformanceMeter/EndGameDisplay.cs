@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using MelonLoader;
@@ -242,7 +243,7 @@ namespace PerformanceMeter
             containerRect.anchoredPosition = new Vector2(0f, -16.0f);
 
             // Background
-            var backgroundSprite = UnityUtil.CreateSpriteFromAssemblyResource(logger, "PerformanceMeter.Resources.Sprites.bg.png");
+            var backgroundSprite = UnityUtil.CreateSpriteFromAssemblyResource(logger, Assembly.GetExecutingAssembly(), "PerformanceMeter.Resources.Sprites.bg.png");
 
             GameObject graphBackground = GameObject.Instantiate(new GameObject("pm_graphBg", typeof(Image)), graphContainer.transform);
             var backgroundImage = graphBackground.GetComponent<Image>();
@@ -267,7 +268,7 @@ namespace PerformanceMeter
             var graphableRect = CreateGraphableRegion(graphContainer.transform, graphableRegionSize);
 
             // Nodes
-            var pointSprite = UnityUtil.CreateSpriteFromAssemblyResource(logger, "PerformanceMeter.Resources.Sprites.circle.png");
+            var pointSprite = UnityUtil.CreateSpriteFromAssemblyResource(logger, Assembly.GetExecutingAssembly(), "PerformanceMeter.Resources.Sprites.circle.png");
             AddPointsToGraph(graphableRect, pointSprite, percentFrames, fnGetColor);
 
             // Time markers

@@ -16,6 +16,11 @@ namespace PerformanceMeterTests
             Console.WriteLine(message);
         }
 
+        public void Debug(string message)
+        {
+            Console.WriteLine(message);
+        }
+
         public void Error(string message)
         {
             Console.Error.WriteLine(message);
