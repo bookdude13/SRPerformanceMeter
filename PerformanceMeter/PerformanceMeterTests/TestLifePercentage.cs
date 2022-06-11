@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using PerformanceMeter;
 using PerformanceMeter.Frames;
+using PerformanceMeter.Models;
 
 namespace PerformanceMeterTests
 {
@@ -22,7 +23,7 @@ namespace PerformanceMeterTests
         [TestMethod]
         public void TestCalculatePercentage_NotEnoughFrames_Returns0()
         {
-            float averagePercent = Utils.CalculateAveragePercent(percentFrames);
+            float averagePercent = LifePercentRun.CalculateAveragePercent(percentFrames);
             Assert.AreEqual(0f, averagePercent, delta);
         }
 
@@ -32,7 +33,7 @@ namespace PerformanceMeterTests
             percentFrames.Add(new PercentFrame(0, 1.0f));
             percentFrames.Add(new PercentFrame(songDurationMs, 1.0f));
 
-            float averagePercent = Utils.CalculateAveragePercent(percentFrames);
+            float averagePercent = LifePercentRun.CalculateAveragePercent(percentFrames);
             Assert.AreEqual(1.0f, averagePercent, delta);
         }
 
@@ -46,7 +47,7 @@ namespace PerformanceMeterTests
             percentFrames.Add(new PercentFrame((int) (songDurationMs * 0.9f), 0.6f));
             percentFrames.Add(new PercentFrame(songDurationMs, 0.6f));
 
-            float averagePercent = Utils.CalculateAveragePercent(percentFrames);
+            float averagePercent = LifePercentRun.CalculateAveragePercent(percentFrames);
             Assert.AreEqual(0.88f, averagePercent, delta);
         }
     }

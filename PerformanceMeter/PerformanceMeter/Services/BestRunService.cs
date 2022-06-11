@@ -1,6 +1,7 @@
 ﻿using PerformanceMeter.Frames;
 using PerformanceMeter.Models;
 using PerformanceMeter.Repositories;
+using SRModCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,10 +12,10 @@ namespace PerformanceMeter.Services
 {
     public class BestRunService
     {
-        private readonly ILogger logger;
+        private readonly SRLogger logger;
         private readonly BestRunRepository repo;
 
-        public BestRunService(ILogger logger, BestRunRepository repo)
+        public BestRunService(SRLogger logger, BestRunRepository repo)
         {
             this.logger = logger;
             this.repo = repo;
@@ -61,10 +62,10 @@ namespace PerformanceMeter.Services
             return bestRun?.LifePercent;
         }
 
-        public void UpdateBestLifePercent(PlayConfiguration playConfiguration, float averageLifePercent, List<PercentFrame> lifePercentFrames)
+        public void UpdateBestLifePercent(PlayConfiguration playConfiguration, List<PercentFrame> lifePercentFrames)
         {
             // TODO distinguish between raw (no mod) and normal (with mod)
-            LifePercentRun newEntry = new LifePercentRun(averageLifePercent, lifePercentFrames);
+            LifePercentRun newEntry = new LifePercentRun(lifePercentFrames);
 
             BestRun bestRun = repo.GetBestRun(playConfiguration.Id);
             if (bestRun == null)

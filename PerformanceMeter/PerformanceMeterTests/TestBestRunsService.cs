@@ -55,14 +55,15 @@ namespace PerformanceMeterTests
             };
         }
 
-        private List<PercentFrame> CreateLifePercentFrames()
+        private List<PercentFrame> CreateLifePercentFrames(float averagePercent)
         {
             return new List<PercentFrame>()
             {
                 new PercentFrame(0.0f, 1.0f),
-                new PercentFrame(1.0f, 1.0f),
-                new PercentFrame(2.0f, 0.8333f),
-                new PercentFrame(2.5f, 0.8700f),
+                new PercentFrame(1.0f, averagePercent),
+                new PercentFrame(2.0f, averagePercent),
+                new PercentFrame(2.5f, averagePercent - (1.0f - averagePercent)),
+                new PercentFrame(3.5f, averagePercent - (1.0f - averagePercent)),
             };
         }
 
@@ -123,9 +124,10 @@ namespace PerformanceMeterTests
         [TestMethod]
         public void TestUpdateBestLifePercent_NoExisting_Sets()
         {
-            var frames = CreateLifePercentFrames();
             float averageLifePercent = 0.8f;
-            service.UpdateBestLifePercent(playConfiguration, averageLifePercent, frames);
+            var frames = CreateLifePercentFrames(averageLifePercent);
+
+            service.UpdateBestLifePercent(playConfiguration, frames);
 
             // Should be set
             LifePercentRun best = service.GetBestLifePercent(playConfiguration);
@@ -137,21 +139,20 @@ namespace PerformanceMeterTests
         [TestMethod]
         public void TestUpdateLifePercent_OnlyUpdatesIfLarger()
         {
-            var frames = CreateLifePercentFrames();
+            var initialLifePercent = 0.9f;
 
             // Add initial
-            var initialLifePercent = 0.9f;
-            service.UpdateBestLifePercent(playConfiguration, initialLifePercent, frames);
+            service.UpdateBestLifePercent(playConfiguration, CreateLifePercentFrames(initialLifePercent));
 
             // Same details, but smaller - not updated
-            service.UpdateBestLifePercent(playConfiguration, initialLifePercent - 0.01f, frames);
+            service.UpdateBestLifePercent(playConfiguration, CreateLifePercentFrames(initialLifePercent - 0.01f));
 
             LifePercentRun best = service.GetBestLifePercent(playConfiguration);
             Assert.IsNotNull(best);
             Assert.AreEqual(0.9f, best.AverageLifePercent);
 
             // Same details, but higher - updated
-            service.UpdateBestLifePercent(playConfiguration, initialLifePercent + 0.01f, frames);
+            service.UpdateBestLifePercent(playConfiguration, CreateLifePercentFrames(initialLifePercent + 0.01f));
             LifePercentRun newBest = service.GetBestLifePercent(playConfiguration);
             Assert.IsNotNull(best);
             Assert.AreEqual(0.9f, best.AverageLifePercent);
