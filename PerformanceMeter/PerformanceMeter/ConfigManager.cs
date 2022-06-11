@@ -1,4 +1,5 @@
 ﻿using MelonLoader;
+using SRModCore;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -27,7 +28,7 @@ namespace PerformanceMeter
             this.modDirectory = modDirectory;
         }
 
-        public void Initialize(MelonLogger.Instance logger)
+        public void Initialize(SRLogger logger)
         {
             prefs = MelonPreferences.CreateCategory("MainPreferences", "Preferences");
 

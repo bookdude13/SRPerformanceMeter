@@ -1,12 +1,13 @@
 
-set BUILT_VERSION="1.2.0"
+set BUILT_VERSION="1.2.1"
+set MOD_NAME="PerformanceMeter"
 
-set RELEASE_BUILD_DIR=".\PerformanceMeter\PerformanceMeter\bin\Release"
-set MAIN_DLL="%RELEASE_BUILD_DIR%\PerformanceMeter.dll"
+set RELEASE_BUILD_DIR=".\%MOD_NAME%\%MOD_NAME%\bin\Release"
+set MAIN_DLL="%RELEASE_BUILD_DIR%\%MOD_NAME%.dll"
 set DB_DLL="%RELEASE_BUILD_DIR%\LiteDB.dll"
 set LIB_DLL_DIR="%RELEASE_BUILD_DIR%\libs"
 
-set OUTPUT_DIR=".\build\SRPerformanceMeter_v%BUILT_VERSION%"
+set OUTPUT_DIR=".\build\%MOD_NAME%_v%BUILT_VERSION%"
 mkdir %OUTPUT_DIR%
 
 copy %MAIN_DLL% %OUTPUT_DIR%

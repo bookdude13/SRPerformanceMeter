@@ -1,5 +1,6 @@
 ﻿using PerformanceMeter.Models;
 using PerformanceMeter.Repositories;
+using SRModCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,10 +11,10 @@ namespace PerformanceMeter.Services
 {
     public class PlayConfigurationService
     {
-        private readonly ILogger logger;
+        private readonly SRLogger logger;
         private readonly PlayConfigurationRepository repo;
 
-        public PlayConfigurationService(ILogger logger, PlayConfigurationRepository repo)
+        public PlayConfigurationService(SRLogger logger, PlayConfigurationRepository repo)
         {
             this.logger = logger;
             this.repo = repo;

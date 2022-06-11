@@ -1,6 +1,7 @@
 ﻿using LiteDB;
 using PerformanceMeter.Frames;
 using PerformanceMeter.Models;
+using SRModCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,10 +12,10 @@ namespace PerformanceMeter.Repositories
 {
     public class BestRunRepository
     {
-        private readonly ILogger logger;
+        private readonly SRLogger logger;
         private readonly ILiteCollection<BestRun> bestRuns;
 
-        public BestRunRepository(ILogger logger, ILiteDatabase db)
+        public BestRunRepository(SRLogger logger, ILiteDatabase db)
         {
             this.logger = logger;
             this.bestRuns = db.GetCollection<BestRun>("BestRun");

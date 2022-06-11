@@ -1,5 +1,6 @@
 ﻿using LiteDB;
 using PerformanceMeter.Models;
+using SRModCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,10 +11,10 @@ namespace PerformanceMeter.Repositories
 {
     public class PlayConfigurationRepository
     {
-        private readonly ILogger logger;
+        private readonly SRLogger logger;
         private readonly ILiteCollection<PlayConfiguration> playConfigurations;
 
-        public PlayConfigurationRepository(ILogger logger, ILiteDatabase db)
+        public PlayConfigurationRepository(SRLogger logger, ILiteDatabase db)
         {
             this.logger = logger;
             this.playConfigurations = db.GetCollection<PlayConfiguration>("PlayConfiguration");

@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using MelonLoader;
 using PerformanceMeter.Frames;
+using PerformanceMeter.Models;
+using SRModCore;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -34,7 +37,7 @@ namespace PerformanceMeter
         /// <param name="bestScoreFrames">Best run's total score frames. If the same as current score, show last high score</param>
         /// <param name="currentScoreFrames">Frames throughout song tracking total score</param>
         public void Inject(
-            MelonLogger.Instance logger,
+            SRLogger logger,
             List<PercentFrame> lifePctFrames,
             List<CumulativeFrame> bestScoreFrames,
             List<CumulativeFrame> currentScoreFrames
@@ -68,7 +71,8 @@ namespace PerformanceMeter
             // Life percent
             if (config.showLifePercentGraph)
             {
-                InjectLifePercentGraph(logger, parent, clonedStatTransform.gameObject, lifePctFrames);
+                float avgLifePct = LifePercentRun.CalculateAveragePercent(lifePctFrames);
+                InjectLifePercentGraph(logger, parent, clonedStatTransform.gameObject, avgLifePct, lifePctFrames);
             }
 
             // Total score comparison
@@ -81,7 +85,7 @@ namespace PerformanceMeter
         }
 
         private void InjectTotalScoreComparisonGraph(
-            MelonLogger.Instance logger,
+            SRLogger logger,
             Transform parent,
             List<CumulativeFrame> bestScoreFrames,
             List<CumulativeFrame> currentScoreFrames
@@ -97,12 +101,12 @@ namespace PerformanceMeter
         }
 
         private void InjectLifePercentGraph(
-            MelonLogger.Instance logger,
+            SRLogger logger,
             Transform parent,
             GameObject clonedStatGameObject,
+            float avgLifePct,
             List<PercentFrame> lifePctFrames
         ) {
-            float avgLifePct = Utils.CalculateAveragePercent(lifePctFrames);
             logger.Msg("Average life pct: " + avgLifePct);
 
             RectTransform lifePctGraphContainer = CreateGraphContainer(logger, parent, "pm_lifePctContainer");
@@ -114,7 +118,7 @@ namespace PerformanceMeter
         /// Creates a container GameObject to hold any one of the graph types
         /// </summary>
         /// <returns>RectTransform of the created container GameObject</returns>
-        private RectTransform CreateGraphContainer(MelonLogger.Instance logger, Transform parent, string containerName)
+        private RectTransform CreateGraphContainer(SRLogger logger, Transform parent, string containerName)
         {
             var container = new GameObject(containerName, typeof(Canvas));
             container.transform.SetParent(parent, false);
@@ -138,9 +142,9 @@ namespace PerformanceMeter
         /// Clones the center screen and moves it to the left to put additional statistics.
         /// Returns the left screen parent GameObject.
         /// </summary>
-        /// <param name="logger">Main MelonLogger.Instance</param>
+        /// <param name="logger">Main logger</param>
         /// <returns>Root GameObject for created left screen</returns>
-        private GameObject InjectLeftScreen(MelonLogger.Instance logger)
+        private GameObject InjectLeftScreen(SRLogger logger)
         {
             GameObject displayWrap = GameObject.Find("DisplayWrap");
 
@@ -169,7 +173,7 @@ namespace PerformanceMeter
             return leftScreen;
         }
 
-        private void InjectTitle(MelonLogger.Instance logger, GameObject leftScreen)
+        private void InjectTitle(SRLogger logger, GameObject leftScreen)
         {
             Transform root = leftScreen.transform.Find("ScoreWrap/TotalScore");
             if (root == null)
@@ -193,7 +197,7 @@ namespace PerformanceMeter
         }
 
         private void InjectAverageStat(
-            MelonLogger.Instance logger,
+            SRLogger logger,
             Transform parent,
             GameObject statToClone,
             string labelText,
@@ -217,7 +221,7 @@ namespace PerformanceMeter
         }
 
         private void InjectPercentGraph(
-            MelonLogger.Instance logger,
+            SRLogger logger,
             Transform parent,
             List<PercentFrame> percentFrames,
             Func<float, Color> fnGetColor,
@@ -239,7 +243,7 @@ namespace PerformanceMeter
             containerRect.anchoredPosition = new Vector2(0f, -16.0f);
 
             // Background
-            var backgroundSprite = UnityUtil.CreateSpriteFromAssemblyResource(logger, "PerformanceMeter.Resources.Sprites.bg.png");
+            var backgroundSprite = UnityUtil.CreateSpriteFromAssemblyResource(logger, Assembly.GetExecutingAssembly(), "PerformanceMeter.Resources.Sprites.bg.png");
 
             GameObject graphBackground = GameObject.Instantiate(new GameObject("pm_graphBg", typeof(Image)), graphContainer.transform);
             var backgroundImage = graphBackground.GetComponent<Image>();
@@ -264,7 +268,7 @@ namespace PerformanceMeter
             var graphableRect = CreateGraphableRegion(graphContainer.transform, graphableRegionSize);
 
             // Nodes
-            var pointSprite = UnityUtil.CreateSpriteFromAssemblyResource(logger, "PerformanceMeter.Resources.Sprites.circle.png");
+            var pointSprite = UnityUtil.CreateSpriteFromAssemblyResource(logger, Assembly.GetExecutingAssembly(), "PerformanceMeter.Resources.Sprites.circle.png");
             AddPointsToGraph(graphableRect, pointSprite, percentFrames, fnGetColor);
 
             // Time markers
