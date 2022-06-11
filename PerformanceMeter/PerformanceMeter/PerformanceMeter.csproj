@@ -105,7 +105,9 @@
     <EmbeddedResource Include="Resources\Sprites\circle.png" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="libs\SRModCore.dll" />
+    <Content Include="libs\SRModCore.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="libs\SynthRidersWebsockets.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
