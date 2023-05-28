@@ -36,8 +36,10 @@ namespace PerformanceMeter
         private static PlayConfiguration currentPlayConfig;        
         private static bool inSong = false;
 
-        public override void OnApplicationStart()
+        public override void OnInitializeMelon()
         {
+            base.OnInitializeMelon();
+
             _logger = new MelonLoggerWrapper(LoggerInstance);
             
             config = new ConfigManager(modDirectory);
