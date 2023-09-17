@@ -2,7 +2,7 @@
 set BUILT_VERSION="1.3.0"
 set MOD_NAME="PerformanceMeter"
 
-set RELEASE_BUILD_DIR=".\%MOD_NAME%\%MOD_NAME%\bin\Release"
+set RELEASE_BUILD_DIR=".\%MOD_NAME%\%MOD_NAME%\bin\Release\net6.0"
 set MAIN_DLL="%RELEASE_BUILD_DIR%\%MOD_NAME%.dll"
 set DB_DLL="%RELEASE_BUILD_DIR%\LiteDB.dll"
 set LIB_DLL_DIR="%RELEASE_BUILD_DIR%\libs"

@@ -1,11 +1,11 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31129.286
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PerformanceMeter", "PerformanceMeter\PerformanceMeter.csproj", "{790E1270-393D-4609-BE62-5A7CB4ACAFF5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PerformanceMeter", "PerformanceMeter\PerformanceMeter.csproj", "{790E1270-393D-4609-BE62-5A7CB4ACAFF5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PerformanceMeterTests", "PerformanceMeterTests\PerformanceMeterTests.csproj", "{3FF09DBE-B3A9-47CD-90C0-D3054DFED8E5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PerformanceMeterTests", "PerformanceMeterTests\PerformanceMeterTests.csproj", "{3FF09DBE-B3A9-47CD-90C0-D3054DFED8E5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

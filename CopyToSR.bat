@@ -1,8 +1,8 @@
 set MOD_NAME="PerformanceMeter"
 
-set BUILT_DLL=".\%MOD_NAME%\%MOD_NAME%\bin\Debug\%MOD_NAME%.dll"
-set DB_DLL=".\%MOD_NAME%\%MOD_NAME%\bin\Debug\LiteDB.dll"
-set LIB_DLL_DIR=".\%MOD_NAME%\%MOD_NAME%\bin\Debug\libs"
+set BUILT_DLL=".\%MOD_NAME%\%MOD_NAME%\bin\Debug\net6.0\%MOD_NAME%.dll"
+set DB_DLL=".\%MOD_NAME%\%MOD_NAME%\bin\Debug\net6.0\LiteDB.dll"
+set LIB_DLL_DIR=".\%MOD_NAME%\%MOD_NAME%\bin\Debug\net6.0\libs"
 set SYNTHRIDERS_MODS_DIR="C:\Program Files (x86)\Steam\steamapps\common\SynthRiders\Mods"
 
 copy %BUILT_DLL% %SYNTHRIDERS_MODS_DIR%

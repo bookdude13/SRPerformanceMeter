@@ -120,8 +120,9 @@ namespace PerformanceMeter
         /// <returns>RectTransform of the created container GameObject</returns>
         private RectTransform CreateGraphContainer(SRLogger logger, Transform parent, string containerName)
         {
-            var container = new GameObject(containerName, typeof(Canvas));
+            var container = new GameObject(containerName);
             container.transform.SetParent(parent, false);
+            container.AddComponent<Canvas>();
             container.AddComponent<CanvasRenderer>();
             container.AddComponent<Image>();
 
@@ -184,10 +185,10 @@ namespace PerformanceMeter
 
             root.name = "pm_title";
 
-            var labelText = root.Find("Label").GetComponent<TMPro.TMP_Text>();
+            var labelText = root.Find("Label").GetComponent<Il2CppTMPro.TMP_Text>();
             labelText.SetText("");
 
-            var valueText = root.Find("Value").GetComponent<TMPro.TMP_Text>();
+            var valueText = root.Find("Value").GetComponent<Il2CppTMPro.TMP_Text>();
             valueText.SetText("Performance");
             valueText.color = Color.white;
 
@@ -209,10 +210,10 @@ namespace PerformanceMeter
             averageStat.transform.localPosition = new Vector3(0.0f, 6.0f, 0.0f);
             averageStat.transform.localEulerAngles = Vector3.zero;
 
-            var labelTMP = averageStat.transform.Find("Label").GetComponent<TMPro.TMP_Text>();
+            var labelTMP = averageStat.transform.Find("Label").GetComponent<Il2CppTMPro.TMP_Text>();
             labelTMP.SetText(labelText);
 
-            var valueText = averageStat.transform.Find("Value").GetComponent<TMPro.TMP_Text>();
+            var valueText = averageStat.transform.Find("Value").GetComponent<Il2CppTMPro.TMP_Text>();
             valueText.SetText(string.Format("{0:0.###}%", averagePercent * 100));
 
             UnityUtil.DeleteChildren(logger, averageStat.transform, new string[] { "Label", "Value", "Bg" });
@@ -231,8 +232,10 @@ namespace PerformanceMeter
             UnityUtil.DeleteChildren(logger, parent, new string[] { "pm_avgPct", "title" });
 
             // Container
-            GameObject graphContainer = new GameObject("pm_graphContainer", typeof(Canvas));
+            GameObject graphContainer = new GameObject("pm_graphContainer");//, typeof(Canvas));
             graphContainer.transform.SetParent(parent, false);
+
+            graphContainer.AddComponent<Canvas>();
 
             var containerRect = graphContainer.GetComponent<RectTransform>();
             containerRect.localPosition = Vector3.zero;
@@ -245,8 +248,11 @@ namespace PerformanceMeter
             // Background
             var backgroundSprite = UnityUtil.CreateSpriteFromAssemblyResource(logger, Assembly.GetExecutingAssembly(), "PerformanceMeter.Resources.Sprites.bg.png");
 
-            GameObject graphBackground = GameObject.Instantiate(new GameObject("pm_graphBg", typeof(Image)), graphContainer.transform);
-            var backgroundImage = graphBackground.GetComponent<Image>();
+            //GameObject graphBackground = GameObject.Instantiate(new GameObject("pm_graphBg", typeof(Image)), graphContainer.transform);
+            var graphBackground = new GameObject("pm_graphBg");
+            graphBackground.transform.SetParent(graphContainer.transform);
+
+            var backgroundImage = graphBackground.AddComponent<Image>();
             backgroundImage.sprite = backgroundSprite;
             backgroundImage.color = Color.black;
 
@@ -296,14 +302,16 @@ namespace PerformanceMeter
         /// <returns>RectTransform of the new label</returns>
         private RectTransform CreateLabel(Transform parent, Vector2 anchoredPosition, string text)
         {
-            var label = new GameObject("pm_graphLabel", typeof(TMPro.TextMeshPro));
+            var label = new GameObject("pm_graphLabel");
             label.transform.SetParent(parent, false);
+
+            // TODO this may break
             var labelRect = label.GetComponent<RectTransform>();
             labelRect.anchorMin = new Vector2(0.5f, 0.5f);
             labelRect.anchorMax = new Vector2(0.5f, 0.5f);
             labelRect.anchoredPosition = anchoredPosition;
 
-            var labelTMP = label.GetComponent<TMPro.TextMeshPro>();
+            var labelTMP = label.AddComponent<Il2CppTMPro.TextMeshPro>();
             labelTMP.fontSize = 6f;
             labelTMP.SetText(text);
             labelTMP.autoSizeTextContainer = true;
@@ -313,8 +321,9 @@ namespace PerformanceMeter
 
         private RectTransform CreateGraphableRegion(Transform graphContainer, Vector2 sizeDelta)
         {
-            var graphableRegion = new GameObject("pm_graphArea", typeof(Canvas));
+            var graphableRegion = new GameObject("pm_graphArea");//, typeof(Canvas));
             graphableRegion.transform.SetParent(graphContainer.transform, false);
+            graphableRegion.AddComponent<Canvas>();
             graphableRegion.AddComponent<CanvasRenderer>();
 
             var graphableRect = graphableRegion.GetComponent<RectTransform>();
@@ -370,10 +379,10 @@ namespace PerformanceMeter
             float graphWidth = graphContainer.sizeDelta.x;
             float graphHeight = graphContainer.sizeDelta.y;
 
-            var dot = new GameObject("pm_graphCircle", typeof(Image));
+            var dot = new GameObject("pm_graphCircle");
             dot.transform.SetParent(graphContainer, false);
 
-            var image = dot.GetComponent<Image>();
+            var image = dot.AddComponent<Image>();
             if (sprite != null)
             {
                 image.sprite = sprite;
@@ -395,10 +404,10 @@ namespace PerformanceMeter
             float graphWidth = graphContainer.sizeDelta.x;
             float graphHeight = graphContainer.sizeDelta.y;
 
-            var marker = new GameObject("pm_graphTimeMark", typeof(Image));
+            var marker = new GameObject("pm_graphTimeMark");
             marker.transform.SetParent(graphContainer, false);
 
-            var image = marker.GetComponent<Image>();
+            var image = marker.AddComponent<Image>();
             image.color = colorMarker;
             image.enabled = true;
 
@@ -415,10 +424,10 @@ namespace PerformanceMeter
         {
             var graphHeight = graphContainer.sizeDelta.y;
 
-            var line = new GameObject("pm_graphAverageLine", typeof(Image));
+            var line = new GameObject("pm_graphAverageLine");
             line.transform.SetParent(graphContainer, false);
 
-            var image = line.GetComponent<Image>();
+            var image = line.AddComponent<Image>();
             image.color = colorAverageLine;
             image.enabled = true;
 
@@ -433,10 +442,10 @@ namespace PerformanceMeter
 
         private GameObject CreateLineSegment(RectTransform graphContainer, Vector2 from, Vector2 to, Color color)
         {
-            var segment = new GameObject("pm_graphLineSegment", typeof(Image));
+            var segment = new GameObject("pm_graphLineSegment");
             segment.transform.SetParent(graphContainer, false);
 
-            var image = segment.GetComponent<Image>();
+            var image = segment.AddComponent<Image>();
             image.color = color;
             image.enabled = true;
 

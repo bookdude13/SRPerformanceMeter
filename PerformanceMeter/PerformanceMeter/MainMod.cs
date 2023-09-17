@@ -12,9 +12,11 @@ using PerformanceMeter.Models;
 using PerformanceMeter.Repositories;
 using PerformanceMeter.Services;
 using SRModCore;
-using Synth.Data;
+using Il2Cpp;
+using Il2CppSynth.Data;
 using SynthRidersWebsockets.Events;
 using UnityEngine;
+using System.Threading;
 
 namespace PerformanceMeter
 {
@@ -28,12 +30,13 @@ namespace PerformanceMeter
         private static BestRunService bestRunService;
         private static PlayConfigurationService playConfigurationService;
         private static EndGameDisplay endGameDisplay;
-        private static SynthRidersEventsManager websocketManager;
+        private static SREventsWebSocketClient webSocketClient;
+        private static CancellationToken webSocketCancellation = new();
 
         private static List<PercentFrame> lifePctFrames;
         private static List<CumulativeFrame> totalScoreFrames;
         private static List<CumulativeFrame> totalPerfectFrames;
-        private static PlayConfiguration currentPlayConfig;        
+        private static PlayConfiguration currentPlayConfig;
         private static bool inSong = false;
 
         public override void OnInitializeMelon()
@@ -77,7 +80,7 @@ namespace PerformanceMeter
             }
 
             _logger.Msg("Setting up websocket manager...");
-            websocketManager = new SynthRidersEventsManager(LoggerInstance, "ws://localhost:9000", this);
+            webSocketClient = new SREventsWebSocketClient(LoggerInstance, "localhost", 9000, this);
 
             _logger.Msg("Initialized.");
         }
@@ -108,7 +111,7 @@ namespace PerformanceMeter
             {
                 // Start websocket client after the server is likely started
                 _logger.Msg("Starting websocket client after startup...");
-                websocketManager.StartAsync();
+                webSocketClient.StartAsync(webSocketCancellation);
             }
             else if (sceneName == SCENE_NAME_GAME_END)
             {
@@ -151,11 +154,11 @@ namespace PerformanceMeter
         {
             base.OnApplicationQuit();
 
-            if (websocketManager != null && config.isEnabled)
+            if (webSocketClient != null && config.isEnabled)
             {
                 try
                 {
-                    websocketManager.Shutdown();
+                    webSocketClient.StopAsync(webSocketCancellation);
                 }
                 catch (Exception e)
                 {
@@ -189,7 +192,7 @@ namespace PerformanceMeter
             }
 
             var modifiers = new List<string>();
-            List<LeaderboardModifier> leaderboardModifiers = infoProvider.GetCurrentModifiersListSelected(false);
+            var leaderboardModifiers = infoProvider.GetCurrentModifiersListSelected(false);
             foreach (var modif in leaderboardModifiers)
             {
                 modifiers.Add(modif.ToString());
@@ -247,7 +250,7 @@ namespace PerformanceMeter
         }
 
         void ISynthRidersEventHandler.OnSceneChange(EventDataSceneChange data)
-        {            
+        {
         }
 
         void ISynthRidersEventHandler.OnReturnToMenu()
