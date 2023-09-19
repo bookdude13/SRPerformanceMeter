@@ -39,6 +39,9 @@ namespace PerformanceMeter
         private static PlayConfiguration currentPlayConfig;
         private static bool inSong = false;
 
+        private bool shouldInject = false;
+        private static TotalScoreRun highScoreRun = null;
+
         public override void OnInitializeMelon()
         {
             base.OnInitializeMelon();
@@ -98,7 +101,7 @@ namespace PerformanceMeter
             totalPerfectFrames.Add(new CumulativeFrame(0, 0));
         }
 
-        public override void OnSceneWasLoaded(int buildIndex, string sceneName)
+        public override async void OnSceneWasLoaded(int buildIndex, string sceneName)
         {
             base.OnSceneWasLoaded(buildIndex, sceneName);
 
@@ -111,7 +114,7 @@ namespace PerformanceMeter
             {
                 // Start websocket client after the server is likely started
                 _logger.Msg("Starting websocket client after startup...");
-                webSocketClient.StartAsync(webSocketCancellation);
+                _ = webSocketClient.StartAsync(webSocketCancellation);
             }
             else if (sceneName == SCENE_NAME_GAME_END)
             {
@@ -121,7 +124,7 @@ namespace PerformanceMeter
 
                 // Database updates
                 LifePercentRun bestLifePercentRun = null;
-                TotalScoreRun highScoreRun = null;
+                
                 try
                 {
                     bestRunService.UpdateBestLifePercent(currentPlayConfig, lifePctFrames);
@@ -145,9 +148,23 @@ namespace PerformanceMeter
 
                 if (lifePctFrames.Count > 0 && totalScoreFrames.Count > 0 && highScoreRun != null)
                 {
-                    endGameDisplay.Inject(_logger, lifePctFrames, highScoreRun.TotalScoreFrames, totalScoreFrames);
+                    shouldInject = true;
                 }
             }
+        }
+
+        public override void OnUpdate()
+        {
+            if (!shouldInject) return;
+
+            // Wait for the center screen to load
+            var center = GameObject.Find("[Game_Scripts]/DisplayWrap");
+            if (center == null) return;
+
+            // Once center screen is loaded show the graph and reset
+            shouldInject = false;
+            endGameDisplay.Inject(_logger, lifePctFrames, highScoreRun.TotalScoreFrames, totalScoreFrames);
+            highScoreRun = null;
         }
 
         public override void OnApplicationQuit()

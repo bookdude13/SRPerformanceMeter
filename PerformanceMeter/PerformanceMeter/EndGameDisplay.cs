@@ -147,18 +147,13 @@ namespace PerformanceMeter
         /// <returns>Root GameObject for created left screen</returns>
         private GameObject InjectLeftScreen(SRLogger logger)
         {
-            GameObject displayWrap = GameObject.Find("DisplayWrap");
+            GameObject displayWrap = GameObject.Find("[Game_Scripts]/DisplayWrap");
 
             // Center screen
-            GameObject centerScreen = displayWrap.transform.Find("No Multiplayer").gameObject;
+            GameObject centerScreen = displayWrap.transform.Find("SinglePlayer").gameObject;
 
             // Clone
-            GameObject leftScreen = GameObject.Instantiate(
-                centerScreen.gameObject,
-                centerScreen.transform.position,
-                centerScreen.transform.rotation,
-                displayWrap.transform
-            );
+            GameObject leftScreen = GameObject.Instantiate(centerScreen, centerScreen.transform.parent, true);
             leftScreen.name = "pm_gameEndLeftScreen";
 
             // Move to left side
@@ -185,14 +180,14 @@ namespace PerformanceMeter
 
             root.name = "pm_title";
 
-            var labelText = root.Find("Label").GetComponent<Il2CppTMPro.TMP_Text>();
+            var labelText = root.Find("TotalScoreLabel").GetComponent<Il2CppTMPro.TMP_Text>();
             labelText.SetText("");
 
             var valueText = root.Find("Value").GetComponent<Il2CppTMPro.TMP_Text>();
             valueText.SetText("Performance");
             valueText.color = Color.white;
 
-            UnityUtil.DeleteChildren(logger, root, new string[] { "Label", "Value" });
+            UnityUtil.DeleteChildren(logger, root, new string[] { "TotalScoreLabel", "Value" });
 
             root.gameObject.SetActive(true);
         }
@@ -233,7 +228,7 @@ namespace PerformanceMeter
 
             // Container
             GameObject graphContainer = new GameObject("pm_graphContainer");//, typeof(Canvas));
-            graphContainer.transform.SetParent(parent, false);
+            graphContainer.transform.SetParent(parent, true);
 
             graphContainer.AddComponent<Canvas>();
 
@@ -369,6 +364,8 @@ namespace PerformanceMeter
 
         private void FillParent(RectTransform rect)
         {
+            rect.localEulerAngles = Vector3.zero;
+            rect.localPosition = Vector3.zero;
             rect.anchorMin = Vector2.zero;
             rect.anchorMax = Vector2.one;
             rect.sizeDelta = Vector2.zero;
