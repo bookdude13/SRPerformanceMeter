@@ -1,0 +1,3 @@
+[submodule "PerformanceMeter/SynthRiders-Websockets-Mod"]
+	path = PerformanceMeter/SynthRiders-Websockets-Mod
+	url = git@github.com:bookdude13/SynthRiders-Websockets-Mod.git

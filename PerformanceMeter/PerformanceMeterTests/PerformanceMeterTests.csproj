@@ -12,9 +12,6 @@
     <Reference Include="MelonLoader">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\SynthRiders\MelonLoader\net6\MelonLoader.dll</HintPath>
     </Reference>
-    <Reference Include="SRModCore">
-      <HintPath>..\PerformanceMeter\libs\SRModCore.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PerformanceMeter\PerformanceMeter.csproj" />
