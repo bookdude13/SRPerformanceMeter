@@ -188,12 +188,15 @@ namespace PerformanceMeter
         {
             if (gameControlManager == null || infoProvider == null)
             {
+                _logger.Error("GameControlManager or Game_InfoProvider null! Cannot retrieve play configuration");
                 return null;
             }
 
             // Pieces taken from Game_InfoProvider.DoScoresUpload() and Util_LeaderboardManager.SubmitMatchScoresGlobal()
 
+            // For Remastered, all user values are null/0. Ignoring them in the db query/comparison for now.
             string username = Util_PlatformManager.MyUserName;
+
             string difficulty = Game_InfoProvider.CurrentDifficultyS.ToString();
             
             LeaderboardInfo.PlayMode gameMode = LeaderboardInfo.PlayMode.Rhythm;
