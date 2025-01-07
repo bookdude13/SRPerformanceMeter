@@ -13,5 +13,5 @@ using MelonLoader;
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("790e1270-393d-4609-be62-5a7cb4acaff5")]
 
-[assembly: MelonInfo(typeof(PerformanceMeter.MainMod), "Performance Meter", "2.0.0", "bookdude13", "https://github.com/bookdude13/SRPerformanceMeter")]
+[assembly: MelonInfo(typeof(PerformanceMeter.MainMod), "Performance Meter", "2.0.1", "bookdude13", "https://github.com/bookdude13/SRPerformanceMeter")]
 [assembly: MelonGame("Kluge Interactive", "SynthRiders")]
