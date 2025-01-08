@@ -1,11 +1,21 @@
-﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31129.286
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33516.290
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PerformanceMeter", "PerformanceMeter\PerformanceMeter.csproj", "{790E1270-393D-4609-BE62-5A7CB4ACAFF5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PerformanceMeter", "PerformanceMeter\PerformanceMeter.csproj", "{790E1270-393D-4609-BE62-5A7CB4ACAFF5}"
+	ProjectSection(ProjectDependencies) = postProject
+		{18AFB272-E16E-44F8-9B23-75BF023E8BFD} = {18AFB272-E16E-44F8-9B23-75BF023E8BFD}
+		{2677D911-C61E-44FE-BA02-3165F74BAE9B} = {2677D911-C61E-44FE-BA02-3165F74BAE9B}
+	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PerformanceMeterTests", "PerformanceMeterTests\PerformanceMeterTests.csproj", "{3FF09DBE-B3A9-47CD-90C0-D3054DFED8E5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PerformanceMeterTests", "PerformanceMeterTests\PerformanceMeterTests.csproj", "{3FF09DBE-B3A9-47CD-90C0-D3054DFED8E5}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SynthRidersWebsockets", "SynthRiders-Websockets-Mod\SynthRidersWebsockets\SynthRidersWebsockets.csproj", "{2677D911-C61E-44FE-BA02-3165F74BAE9B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{18AFB272-E16E-44F8-9B23-75BF023E8BFD} = {18AFB272-E16E-44F8-9B23-75BF023E8BFD}
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SRModCore", "SynthRiders-Websockets-Mod\SRModCore\SRModCore\SRModCore.csproj", "{18AFB272-E16E-44F8-9B23-75BF023E8BFD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +31,14 @@ Global
 		{3FF09DBE-B3A9-47CD-90C0-D3054DFED8E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3FF09DBE-B3A9-47CD-90C0-D3054DFED8E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3FF09DBE-B3A9-47CD-90C0-D3054DFED8E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2677D911-C61E-44FE-BA02-3165F74BAE9B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2677D911-C61E-44FE-BA02-3165F74BAE9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2677D911-C61E-44FE-BA02-3165F74BAE9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2677D911-C61E-44FE-BA02-3165F74BAE9B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18AFB272-E16E-44F8-9B23-75BF023E8BFD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18AFB272-E16E-44F8-9B23-75BF023E8BFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18AFB272-E16E-44F8-9B23-75BF023E8BFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18AFB272-E16E-44F8-9B23-75BF023E8BFD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

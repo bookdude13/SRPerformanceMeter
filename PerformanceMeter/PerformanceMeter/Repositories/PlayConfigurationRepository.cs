@@ -42,7 +42,9 @@ namespace PerformanceMeter.Repositories
             try
             {
                 return playConfigurations.Query()
-                    .Where(config => config.Username == username)
+                    // As of Synth Riders Remastered I don't know how to get the username...
+                    // So, don't require it to match in the query (otherwise the nulls cause it to never get the existing record)
+                    //.Where(config => config.Username == username)
                     .Where(config => config.MapHash == mapHash)
                     .Where(config => config.Difficulty == difficulty)
                     .Where(config => config.GameMode == gameMode)
@@ -52,15 +54,7 @@ namespace PerformanceMeter.Repositories
             }
             catch (Exception e)
             {
-                logger.Msg(string.Format(
-                    "Failed to retrieve play configuration for {0} {1} {2} {3} {4}: {5}",
-                    username,
-                    mapHash,
-                    difficulty,
-                    gameMode,
-                    modifiers.ToString(),
-                    e.Message
-                ));
+                logger.Msg($"Failed to retrieve play configuration for {username} {mapHash} {difficulty} {gameMode} {modifiers}: {e.Message}");
 
                 return null;
             }
