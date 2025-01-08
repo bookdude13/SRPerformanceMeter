@@ -22,6 +22,8 @@ namespace PerformanceMeter
 {
     public class MainMod : MelonMod, ISynthRidersEventHandler
     {
+        private const bool VERBOSE_LOGS = false;
+
         private static readonly string SCENE_NAME_GAME_END = "3.GameEnd";
         private static readonly string modDirectory = "UserData/PerformanceMeter";
 
@@ -101,7 +103,7 @@ namespace PerformanceMeter
             totalPerfectFrames.Add(new CumulativeFrame(0, 0));
         }
 
-        public override async void OnSceneWasLoaded(int buildIndex, string sceneName)
+        public override void OnSceneWasLoaded(int buildIndex, string sceneName)
         {
             base.OnSceneWasLoaded(buildIndex, sceneName);
 
@@ -155,11 +157,13 @@ namespace PerformanceMeter
 
         public override void OnUpdate()
         {
-            if (!shouldInject) return;
+            if (!shouldInject)
+                return;
 
             // Wait for the center screen to load
-            var center = GameObject.Find("[Game_Scripts]/DisplayWrap");
-            if (center == null) return;
+            var center = GameObject.Find("[Score Summary]/DisplayWrap");
+            if (center == null)
+                return;
 
             // Once center screen is loaded show the graph and reset
             shouldInject = false;
@@ -167,7 +171,7 @@ namespace PerformanceMeter
             highScoreRun = null;
         }
 
-        public override void OnApplicationQuit()
+        public override async void OnApplicationQuit()
         {
             base.OnApplicationQuit();
 
@@ -175,7 +179,7 @@ namespace PerformanceMeter
             {
                 try
                 {
-                    webSocketClient.StopAsync(webSocketCancellation);
+                    await webSocketClient.StopAsync(webSocketCancellation);
                 }
                 catch (Exception e)
                 {
@@ -228,11 +232,19 @@ namespace PerformanceMeter
             };
         }
 
+        void LogVerbose(string message)
+        {
+            if (VERBOSE_LOGS)
+            {
+                _logger.Msg(message);
+            }
+        }
+
         /* Handle websocket events */
 
         void ISynthRidersEventHandler.OnSongStart(EventDataSongStart data)
         {
-            _logger.Msg("Song started!");
+            LogVerbose("Song started!");
             Reset();
             inSong = true;
             currentPlayConfig = GetCurrentPlayConfiguration(GameControlManager.s_instance, Game_InfoProvider.s_instance);
@@ -240,7 +252,7 @@ namespace PerformanceMeter
 
         void ISynthRidersEventHandler.OnSongEnd(EventDataSongEnd data)
         {
-            _logger.Msg("Song ended!");
+            LogVerbose("Song ended!");
             inSong = false;
 
             // Once we don't risk introducing any lag into the run, ensure that the play config exists while wrapping up the map
@@ -249,11 +261,12 @@ namespace PerformanceMeter
 
         void ISynthRidersEventHandler.OnPlayTime(EventDataPlayTime data)
         {
-            _logger.Msg("Play time " + data.playTimeMS);
+            LogVerbose("Play time " + data.playTimeMS);
         }
 
         void ISynthRidersEventHandler.OnNoteHit(EventDataNoteHit data)
         {
+            LogVerbose($"Note miss. Health: {data.lifeBarPercent}");
             if (inSong)
             {
                 lifePctFrames.Add(new PercentFrame(data.playTimeMS, data.lifeBarPercent));
@@ -272,6 +285,10 @@ namespace PerformanceMeter
         void ISynthRidersEventHandler.OnSceneChange(EventDataSceneChange data)
         {
         }
+
+        void ISynthRidersEventHandler.OnEnterSpecial() { }
+        void ISynthRidersEventHandler.OnCompleteSpecial() { }
+        void ISynthRidersEventHandler.OnFailSpecial() { }
 
         void ISynthRidersEventHandler.OnReturnToMenu()
         {

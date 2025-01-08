@@ -10,6 +10,7 @@ using PerformanceMeter.Models;
 using SRModCore;
 using UnityEngine;
 using UnityEngine.UI;
+using static Il2CppRootMotion.Demos.Turret;
 
 namespace PerformanceMeter
 {
@@ -54,17 +55,17 @@ namespace PerformanceMeter
             InjectTitle(logger, leftScreen);
 
             // Get some existing objects for later reference
-            Transform parent = leftScreen.transform.Find("ScoreWrap");
+            Transform parent = leftScreen.transform.Find("ScoreUI");
             if (parent == null)
             {
                 logger.Msg("Failed to find root transform for graph");
                 return;
             }
 
-            Transform clonedStatTransform = parent.Find("Streak");
+            Transform clonedStatTransform = parent.Find("Song Stats/SongStat - Longest Streak");
             if (clonedStatTransform == null)
             {
-                logger.Msg("Failed to find transform to clone for stats");
+                logger.Msg("Failed to find transform clone for stats");
                 return;
             }
 
@@ -110,7 +111,7 @@ namespace PerformanceMeter
             logger.Msg("Average life pct: " + avgLifePct);
 
             RectTransform lifePctGraphContainer = CreateGraphContainer(logger, parent, "pm_lifePctContainer");
-            InjectAverageStat(logger, lifePctGraphContainer, clonedStatGameObject, "Average Life Percent: ", avgLifePct);
+            InjectAverageStat(logger, lifePctGraphContainer, clonedStatGameObject, "Average Life %", avgLifePct);
             InjectPercentGraph(logger, lifePctGraphContainer, lifePctFrames, GetColorForLifePercent, avgLifePct);
         }
 
@@ -131,8 +132,8 @@ namespace PerformanceMeter
             containerRect.localEulerAngles = Vector3.zero;
             containerRect.anchorMin = new Vector2(0f, 0.5f);
             containerRect.anchorMax = new Vector2(1f, 0.5f);
-            containerRect.sizeDelta = new Vector2(20.0f, 21.0f);
-            containerRect.anchoredPosition = new Vector2(0f, 5.0f);
+            containerRect.sizeDelta = new Vector2(2.0f, 2.0f);
+            containerRect.anchoredPosition = new Vector2(0f, 1.0f);
 
             container.GetComponent<Image>().color = Color.clear;
 
@@ -147,7 +148,7 @@ namespace PerformanceMeter
         /// <returns>Root GameObject for created left screen</returns>
         private GameObject InjectLeftScreen(SRLogger logger)
         {
-            GameObject displayWrap = GameObject.Find("[Game_Scripts]/DisplayWrap");
+            GameObject displayWrap = GameObject.Find("[Score Summary]/DisplayWrap");
 
             // Center screen
             GameObject centerScreen = displayWrap.transform.Find("SinglePlayer").gameObject;
@@ -161,17 +162,19 @@ namespace PerformanceMeter
             leftScreen.transform.RotateAround(platformPosition, Vector3.up, -75.0f);
 
             // Delete unwanted children
-            UnityUtil.DeleteChildren(logger, leftScreen.transform, new string[] { "ScoreWrap" });
+            UnityUtil.DeleteChildren(logger, leftScreen.transform, new string[] { "ScoreUI" });
 
-            // Delete unwanted children
-            UnityUtil.DeleteChildren(logger, leftScreen.transform.Find("ScoreWrap"), new string[] { "TotalScore", "Streak" });
+            var scoreUi = leftScreen.transform.Find("ScoreUI");
+            UnityUtil.DeleteChildren(logger, scoreUi.transform, new string[] { "Background", "Score", "Song Stats" });
+
+            UnityUtil.DeleteChildren(logger, scoreUi.transform.Find("Song Stats"), new string[] { "SongStat - Longest Streak" });
 
             return leftScreen;
         }
 
         private void InjectTitle(SRLogger logger, GameObject leftScreen)
         {
-            Transform root = leftScreen.transform.Find("ScoreWrap/TotalScore");
+            Transform root = leftScreen.transform.Find("ScoreUI/Score");
             if (root == null)
             {
                 logger.Msg("Failed to find root transform");
@@ -179,15 +182,16 @@ namespace PerformanceMeter
             }
 
             root.name = "pm_title";
+            root.localPosition += Vector3.up * 2.0f;
 
-            var labelText = root.Find("TotalScoreLabel").GetComponent<Il2CppTMPro.TMP_Text>();
+            var labelText = root.Find("Final Score Label").GetComponent<Il2CppTMPro.TMP_Text>();
             labelText.SetText("");
 
-            var valueText = root.Find("Value").GetComponent<Il2CppTMPro.TMP_Text>();
+            var valueText = root.Find("Final Score Value").GetComponent<Il2CppTMPro.TMP_Text>();
             valueText.SetText("Performance");
             valueText.color = Color.white;
 
-            UnityUtil.DeleteChildren(logger, root, new string[] { "TotalScoreLabel", "Value" });
+            UnityUtil.DeleteChildren(logger, root, new string[] { "Final Score Label", "Final Score Value" });
 
             root.gameObject.SetActive(true);
         }
@@ -205,13 +209,13 @@ namespace PerformanceMeter
             averageStat.transform.localPosition = new Vector3(0.0f, 6.0f, 0.0f);
             averageStat.transform.localEulerAngles = Vector3.zero;
 
-            var labelTMP = averageStat.transform.Find("Label").GetComponent<Il2CppTMPro.TMP_Text>();
+            var labelTMP = averageStat.transform.Find("StatName").GetComponent<Il2CppTMPro.TMP_Text>();
             labelTMP.SetText(labelText);
 
-            var valueText = averageStat.transform.Find("Value").GetComponent<Il2CppTMPro.TMP_Text>();
+            var valueText = averageStat.transform.Find("StatValue").GetComponent<Il2CppTMPro.TMP_Text>();
             valueText.SetText(string.Format("{0:0.###}%", averagePercent * 100));
 
-            UnityUtil.DeleteChildren(logger, averageStat.transform, new string[] { "Label", "Value", "Bg" });
+            UnityUtil.DeleteChildren(logger, averageStat.transform, new string[] { "StatName", "StatValue", "BG" });
 
             averageStat.SetActive(true);
         }
@@ -237,19 +241,18 @@ namespace PerformanceMeter
             containerRect.localEulerAngles = Vector3.zero;
             containerRect.anchorMin = new Vector2(0.5f, 1f);
             containerRect.anchorMax = new Vector2(0.5f, 1f);
-            containerRect.sizeDelta = new Vector2(20.0f, 15.0f);
-            containerRect.anchoredPosition = new Vector2(0f, -16.0f);
+            containerRect.sizeDelta = new Vector2(2.0f, 1.5f);
+            containerRect.anchoredPosition = new Vector2(0f, -6.0f);
 
             // Background
             var backgroundSprite = UnityUtil.CreateSpriteFromAssemblyResource(logger, Assembly.GetExecutingAssembly(), "PerformanceMeter.Resources.Sprites.bg.png");
 
-            //GameObject graphBackground = GameObject.Instantiate(new GameObject("pm_graphBg", typeof(Image)), graphContainer.transform);
             var graphBackground = new GameObject("pm_graphBg");
             graphBackground.transform.SetParent(graphContainer.transform);
 
             var backgroundImage = graphBackground.AddComponent<Image>();
             backgroundImage.sprite = backgroundSprite;
-            backgroundImage.color = Color.black;
+            backgroundImage.color = new Color(0f, 0f, 0f, 0.7f);
 
             FillParent(graphBackground.GetComponent<RectTransform>());
 
@@ -264,7 +267,7 @@ namespace PerformanceMeter
             label0.anchorMax = new Vector2(0f, 0f);*/
 
             // Graphable Region
-            var padding = new Vector2(0.4f, 0.4f);
+            var padding = new Vector2(0.2f, 0.2f);
             var graphableRegionSize = containerRect.sizeDelta - padding;
             var graphableRect = CreateGraphableRegion(graphContainer.transform, graphableRegionSize);
 
@@ -389,7 +392,7 @@ namespace PerformanceMeter
 
             var rectTransform = dot.GetComponent<RectTransform>();
             rectTransform.anchoredPosition = new Vector2(pctTime * graphWidth, pctOfTotal * graphHeight);
-            rectTransform.sizeDelta = new Vector2(0.04f, 0.04f);
+            rectTransform.sizeDelta = new Vector2(0.01f, 0.01f);
             rectTransform.anchorMin = new Vector2(0, 0);
             rectTransform.anchorMax = new Vector2(0, 0);
 
@@ -409,8 +412,8 @@ namespace PerformanceMeter
             image.enabled = true;
 
             var rectTransform = marker.GetComponent<RectTransform>();
-            rectTransform.anchoredPosition = new Vector2(pctTime * graphWidth, 0.0f);
-            rectTransform.sizeDelta = new Vector2(0.03f, 0.5f);
+            rectTransform.anchoredPosition = new Vector2(pctTime * graphWidth, -0.1f);
+            rectTransform.sizeDelta = new Vector2(0.01f, 0.07f);
             rectTransform.anchorMin = new Vector2(0, 0);
             rectTransform.anchorMax = new Vector2(0, 0);
 
@@ -431,7 +434,7 @@ namespace PerformanceMeter
             var rectTransform = line.GetComponent<RectTransform>();
             rectTransform.anchorMin = new Vector2(0, 0);
             rectTransform.anchorMax = new Vector2(1, 0);
-            rectTransform.sizeDelta = new Vector2(0f, 0.04f);
+            rectTransform.sizeDelta = new Vector2(0f, 0.01f);
             rectTransform.anchoredPosition = new Vector2(0f, averagePercent * graphHeight);
 
             return line;
@@ -451,7 +454,7 @@ namespace PerformanceMeter
             var distance = Vector2.Distance(from, to);
             rectTransform.anchorMin = new Vector2(0, 0);
             rectTransform.anchorMax = new Vector2(0, 0);
-            rectTransform.sizeDelta = new Vector2(distance, 0.06f);
+            rectTransform.sizeDelta = new Vector2(distance, 0.01f);
             rectTransform.anchoredPosition = from + direction * distance * .5f;
             rectTransform.localEulerAngles = new Vector3(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
 
