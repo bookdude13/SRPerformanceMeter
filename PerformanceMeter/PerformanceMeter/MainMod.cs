@@ -1,11 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using HarmonyLib;
 using MelonLoader;
 using PerformanceMeter.Frames;
 using PerformanceMeter.Models;
@@ -266,7 +261,7 @@ namespace PerformanceMeter
 
         void ISynthRidersEventHandler.OnNoteHit(EventDataNoteHit data)
         {
-            LogVerbose($"Note miss. Health: {data.lifeBarPercent}");
+            LogVerbose($"Note hit. Health: {data.lifeBarPercent}");
             if (inSong)
             {
                 lifePctFrames.Add(new PercentFrame(data.playTimeMS, data.lifeBarPercent));
@@ -276,6 +271,7 @@ namespace PerformanceMeter
 
         void ISynthRidersEventHandler.OnNoteMiss(EventDataNoteMiss data)
         {
+            LogVerbose($"Note miss. Health: {data.lifeBarPercent}");
             if (inSong)
             {
                 lifePctFrames.Add(new PercentFrame(data.playTimeMS, data.lifeBarPercent));
